@@ -12,8 +12,8 @@ import kotlinx.coroutines.launch
 
 open class PowerConnectionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        val action = intent.action ?: return
-        if (action != Intent.ACTION_POWER_CONNECTED && action != Intent.ACTION_POWER_DISCONNECTED) {
+        val incomingAction = intent.action ?: return
+        if (incomingAction != Intent.ACTION_POWER_CONNECTED && incomingAction != Intent.ACTION_POWER_DISCONNECTED) {
             return
         }
 
@@ -22,7 +22,7 @@ open class PowerConnectionReceiver : BroadcastReceiver() {
             try {
                 val settings = PreferencesManager(context).userSettingsFlow.first()
                 if (settings.autoStartOnPlug) {
-                    if (action == Intent.ACTION_POWER_CONNECTED) {
+                    if (incomingAction == Intent.ACTION_POWER_CONNECTED) {
                         val serviceIntent = Intent(context, ChargingMonitorService::class.java).apply {
                             action = ChargingMonitorService.ACTION_START
                         }
@@ -31,14 +31,14 @@ open class PowerConnectionReceiver : BroadcastReceiver() {
                         } else {
                             context.startService(serviceIntent)
                         }
-                    } else if (action == Intent.ACTION_POWER_DISCONNECTED) {
+                    } else if (incomingAction == Intent.ACTION_POWER_DISCONNECTED) {
                         val serviceIntent = Intent(context, ChargingMonitorService::class.java).apply {
                             action = ChargingMonitorService.ACTION_STOP
                         }
                         context.startService(serviceIntent)
                     }
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
             } finally {
                 pendingResult.finish()
             }

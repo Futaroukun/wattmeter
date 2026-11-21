@@ -96,7 +96,7 @@ class ChargingMonitorService : Service() {
                     notification,
                     ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
                 )
-            } catch (_: Exception) {
+            } catch (e: Exception) {
                 startForeground(NOTIFICATION_ID_MONITORING, notification)
             }
         } else {
@@ -135,7 +135,7 @@ class ChargingMonitorService : Service() {
         serviceScope.launch(Dispatchers.IO) {
             try {
                 WattmeterWidget().updateAll(applicationContext)
-            } catch (_: Exception) {
+            } catch (e: Exception) {
             }
         }
     }

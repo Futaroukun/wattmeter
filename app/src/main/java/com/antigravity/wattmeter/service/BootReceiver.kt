@@ -27,7 +27,7 @@ open class BootReceiver : BroadcastReceiver() {
                             context.startService(serviceIntent)
                         }
                     }
-                } catch (_: Exception) {
+                } catch (e: Exception) {
                 } finally {
                     pendingResult.finish()
                 }

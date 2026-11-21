@@ -1,6 +1,7 @@
 package com.antigravity.wattmeter.widget
 
 import android.content.Context
+import android.content.Intent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -45,12 +46,12 @@ class WattmeterWidget : GlanceAppWidget() {
         }
 
         provideContent {
-            WidgetContent(displaySnapshot)
+            WidgetContent(context, displaySnapshot)
         }
     }
 
     @Composable
-    private fun WidgetContent(snapshot: BatterySnapshot) {
+    private fun WidgetContent(context: Context, snapshot: BatterySnapshot) {
         val isCharging = snapshot.isCharging
         val backgroundColor = Color(0xFF121417)
         val cardColor = Color(0xFF1B1F23)
@@ -60,13 +61,17 @@ class WattmeterWidget : GlanceAppWidget() {
         val chipBackground = if (isCharging) Color(0xFF004D40) else Color(0xFF263238)
         val chipText = if (isCharging) Color(0xFF64FFDA) else Color(0xFFB0BEC5)
 
+        val launchIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+
         Box(
             modifier = GlanceModifier
                 .fillMaxSize()
                 .background(backgroundColor)
                 .cornerRadius(16.dp)
                 .padding(12.dp)
-                .clickable(actionStartActivity<MainActivity>())
+                .clickable(actionStartActivity(launchIntent))
         ) {
             Column(
                 modifier = GlanceModifier.fillMaxSize(),

@@ -89,7 +89,7 @@ fun WattGauge(
     ) {
         Canvas(modifier = Modifier.fillMaxSize().padding(16.dp)) {
             val strokeWidth = 18.dp.toPx()
-            val arcSize = Size(size.width - strokeWidth, size.height - strokeWidth)
+            val arcSize = Size(this.size.width - strokeWidth, this.size.height - strokeWidth)
             val topLeft = Offset(strokeWidth / 2f, strokeWidth / 2f)
 
             drawArc(

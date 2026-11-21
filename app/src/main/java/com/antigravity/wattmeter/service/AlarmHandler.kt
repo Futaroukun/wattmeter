@@ -131,7 +131,7 @@ class AlarmHandler(private val context: Context) {
                 prepare()
                 start()
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
         }
     }
 
@@ -152,7 +152,7 @@ class AlarmHandler(private val context: Context) {
                 @Suppress("DEPRECATION")
                 vibrator?.vibrate(pattern, -1)
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
         }
     }
 
@@ -208,7 +208,7 @@ class AlarmHandler(private val context: Context) {
         try {
             mediaPlayer?.stop()
             mediaPlayer?.release()
-        } catch (_: Exception) {
+        } catch (e: Exception) {
         } finally {
             mediaPlayer = null
         }
