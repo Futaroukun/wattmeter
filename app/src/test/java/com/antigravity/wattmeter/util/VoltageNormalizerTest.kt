@@ -9,20 +9,20 @@ class VoltageNormalizerTest {
 
     @Test
     fun millivoltIsConvertedToVolt() {
-        assertEquals(4.2, VoltageNormalizer.normalize(4200), 0.0001)
+        assertEquals(4.2, VoltageNormalizer.normalize(4200L), 0.0001)
     }
 
     @Test
     fun microvoltIsConvertedToVolt() {
-        assertEquals(4.2, VoltageNormalizer.normalize(4_200_000), 0.0001)
+        assertEquals(4.2, VoltageNormalizer.normalize(4_200_000L), 0.0001)
     }
 
     @Test
     fun outOfRangeValueIsRejected() {
-        assertEquals(0.0, VoltageNormalizer.normalize(0), 0.0)
-        assertEquals(0.0, VoltageNormalizer.normalize(-5), 0.0)
-        assertEquals(0.0, VoltageNormalizer.normalize(1500), 0.0)
-        assertEquals(0.0, VoltageNormalizer.normalize(900_000_000), 0.0)
+        assertEquals(0.0, VoltageNormalizer.normalize(0L), 0.0)
+        assertEquals(0.0, VoltageNormalizer.normalize(-5L), 0.0)
+        assertEquals(0.0, VoltageNormalizer.normalize(1500L), 0.0)
+        assertEquals(0.0, VoltageNormalizer.normalize(900_000_000L), 0.0)
     }
 
     @Test

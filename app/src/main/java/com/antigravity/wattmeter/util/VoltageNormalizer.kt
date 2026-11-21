@@ -13,6 +13,8 @@ object VoltageNormalizer {
         return if (volt in 2.5..6.0) volt else 0.0
     }
 
+    fun normalize(raw: Int): Double = normalize(raw.toLong())
+
     fun estimateFromLevel(levelPercent: Int): Double {
         return 3.5 + 0.008 * levelPercent.coerceIn(0, 100)
     }
