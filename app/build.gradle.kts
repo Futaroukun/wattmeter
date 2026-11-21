@@ -5,6 +5,13 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
+fun secret(name: String): String? = System.getenv(name)?.takeIf { it.isNotBlank() }
+    ?: (project.findProperty(name) as String?)?.takeIf { it.isNotBlank() }
+
+val customKeystore = secret("KEYSTORE_FILE")?.let { file(it) }?.takeIf { it.exists() }
+val defaultKeystore = file("keystore/release.jks").takeIf { it.exists() }
+val releaseKeystoreFile = customKeystore ?: defaultKeystore
+
 android {
     namespace = "com.antigravity.wattmeter"
     compileSdk = 35
@@ -13,24 +20,30 @@ android {
         applicationId = "com.antigravity.wattmeter"
         minSdk = 26
         targetSdk = 35
-        versionCode = (System.currentTimeMillis() / 1000).toInt()
+        versionCode = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: ((System.currentTimeMillis() / 1000).toInt())
         versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
-        create("release") {
-            storeFile = file("keystore/release.jks")
-            storePassword = "wattmeter123"
-            keyAlias = "wattmeter"
-            keyPassword = "wattmeter123"
+        if (releaseKeystoreFile != null) {
+            create("release") {
+                storeFile = releaseKeystoreFile
+                storePassword = secret("KEYSTORE_PASSWORD") ?: "wattmeter123"
+                keyAlias = secret("KEY_ALIAS") ?: "wattmeter"
+                keyPassword = secret("KEY_PASSWORD") ?: "wattmeter123"
+            }
         }
     }
 
     buildTypes {
         debug {
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = if (releaseKeystoreFile != null) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
         release {
             isMinifyEnabled = true
@@ -39,7 +52,11 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = if (releaseKeystoreFile != null) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 
@@ -83,6 +100,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 
     implementation("androidx.core:core-ktx:1.15.0")
+
+    testImplementation("junit:junit:4.13.2")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")

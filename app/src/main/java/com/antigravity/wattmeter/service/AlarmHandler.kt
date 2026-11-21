@@ -1,6 +1,5 @@
 package com.antigravity.wattmeter.service
 
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
@@ -12,6 +11,7 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.antigravity.wattmeter.MainActivity
 import com.antigravity.wattmeter.R
@@ -19,114 +19,81 @@ import com.antigravity.wattmeter.data.model.BatterySnapshot
 import com.antigravity.wattmeter.data.model.UserSettings
 import java.util.Locale
 
+private const val TAG = "AlarmHandler"
+
 class AlarmHandler(private val context: Context) {
     private val notificationManager =
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
     private var mediaPlayer: MediaPlayer? = null
+    private var lastFullAlertTime = 0L
+    private var lastLevelAlertTime = 0L
+    private var lastTempAlertTime = 0L
 
-    private var wasFullAlarmTriggered = false
-    private var wasLevelAlarmTriggered = false
-    private var wasTempAlarmTriggered = false
-    private var wasCharging = false
-    private var lastAlarmTimestamp = 0L
+    fun checkAndTriggerAlarms(snapshot: BatterySnapshot, settings: UserSettings) {
+        val now = System.currentTimeMillis()
 
-    init {
-        createAlarmChannel()
-    }
-
-    private fun createAlarmChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID_ALARMS,
-                "Wattmeter Alarms",
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "High priority battery alerts"
-                enableVibration(true)
-                setShowBadge(true)
-            }
-            notificationManager.createNotificationChannel(channel)
-        }
-    }
-
-    fun checkThresholds(snapshot: BatterySnapshot, settings: UserSettings) {
-        val isCharging = snapshot.isCharging
-        val level = snapshot.levelPercent
-        val temp = snapshot.temperatureCelsius
-
-        if (!wasCharging && isCharging) {
-            if (level >= settings.alarmLevelThreshold) {
-                wasLevelAlarmTriggered = true
-            }
-            if (level >= 99) {
-                wasFullAlarmTriggered = true
-            }
-        }
-
-        if (settings.alarmFullBattery && isCharging) {
-            val isFull = (level >= 100)
-            if (isFull && !wasFullAlarmTriggered) {
-                wasFullAlarmTriggered = true
+        if (settings.alarmBatteryFull && snapshot.levelPercent >= 100 && snapshot.isCharging) {
+            if (now - lastFullAlertTime > COOLDOWN_MS) {
+                lastFullAlertTime = now
                 triggerAlarm(
                     ALARM_ID_FULL,
-                    "Battery Full",
-                    "Battery has reached 100% capacity."
+                    "Battery Full (100%)",
+                    "Battery is fully charged. Unplug the charger to preserve battery longevity.",
+                    settings.alarmSoundEnabled,
+                    settings.alarmVibrationEnabled
                 )
-            } else if (level < 95) {
-                wasFullAlarmTriggered = false
             }
         }
 
-        if (settings.alarmLevelEnabled && settings.alarmLevelThreshold in 1..99 && isCharging) {
-            val targetReached = level >= settings.alarmLevelThreshold
-            if (targetReached && !wasLevelAlarmTriggered) {
-                wasLevelAlarmTriggered = true
+        if (settings.alarmBatteryLevel && snapshot.levelPercent >= settings.alarmBatteryLevelThreshold && snapshot.isCharging) {
+            if (now - lastLevelAlertTime > COOLDOWN_MS) {
+                lastLevelAlertTime = now
                 triggerAlarm(
                     ALARM_ID_LEVEL,
-                    "Target Level Reached",
-                    String.format(Locale.US, "Battery charged to %d%% (%.1f W).", level, snapshot.smoothedWatt)
+                    "Battery Threshold Reached (${snapshot.levelPercent}%)",
+                    "Battery has reached target limit of ${settings.alarmBatteryLevelThreshold}%.",
+                    settings.alarmSoundEnabled,
+                    settings.alarmVibrationEnabled
                 )
-            } else if (level < settings.alarmLevelThreshold - 2) {
-                wasLevelAlarmTriggered = false
             }
         }
 
-        if (settings.alarmTempEnabled && settings.alarmTempThreshold > 0.0f) {
-            val isOverheat = temp >= settings.alarmTempThreshold
-            if (isOverheat && !wasTempAlarmTriggered) {
-                wasTempAlarmTriggered = true
+        if (settings.alarmOverheat && snapshot.temperatureCelsius >= settings.alarmOverheatThreshold) {
+            if (now - lastTempAlertTime > COOLDOWN_MS) {
+                lastTempAlertTime = now
                 triggerAlarm(
                     ALARM_ID_TEMP,
-                    "Battery Overheat Warning",
-                    String.format(Locale.US, "Battery temperature reached %.1f°C! Please unplug.", temp)
+                    "High Battery Temperature (${String.format(Locale.US, "%.1f", snapshot.temperatureCelsius)}°C)",
+                    "Battery temperature is high. Disconnect charger or reduce device workload.",
+                    settings.alarmSoundEnabled,
+                    settings.alarmVibrationEnabled
                 )
-            } else if (temp < settings.alarmTempThreshold - 1.5f) {
-                wasTempAlarmTriggered = false
             }
         }
-
-        wasCharging = isCharging
     }
 
-    private fun triggerAlarm(notificationId: Int, title: String, text: String) {
-        val now = System.currentTimeMillis()
-        if (now - lastAlarmTimestamp < COOLDOWN_MS) {
-            return
+    private fun triggerAlarm(
+        id: Int,
+        title: String,
+        text: String,
+        sound: Boolean,
+        vibrate: Boolean
+    ) {
+        if (sound) {
+            playSound()
         }
-        lastAlarmTimestamp = now
-
-        playSound()
-        vibrate()
-        showNotification(notificationId, title, text)
+        if (vibrate) {
+            vibrate()
+        }
+        showNotification(id, title, text)
     }
 
     private fun playSound() {
         try {
             stopSound()
             val alertUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
-
+                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
             mediaPlayer = MediaPlayer().apply {
                 setDataSource(context, alertUri)
                 setAudioAttributes(
@@ -140,6 +107,7 @@ class AlarmHandler(private val context: Context) {
                 start()
             }
         } catch (e: Exception) {
+            Log.w(TAG, "Alarm operation failed", e)
         }
     }
 
@@ -161,6 +129,7 @@ class AlarmHandler(private val context: Context) {
                 vibrator?.vibrate(pattern, -1)
             }
         } catch (e: Exception) {
+            Log.w(TAG, "Alarm operation failed", e)
         }
     }
 
@@ -217,6 +186,7 @@ class AlarmHandler(private val context: Context) {
             mediaPlayer?.stop()
             mediaPlayer?.release()
         } catch (e: Exception) {
+            Log.w(TAG, "Alarm operation failed", e)
         } finally {
             mediaPlayer = null
         }

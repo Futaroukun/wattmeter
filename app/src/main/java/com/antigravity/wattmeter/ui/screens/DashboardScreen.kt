@@ -161,7 +161,8 @@ fun DashboardScreen(
             watt = snapshot.watt,
             smoothedWatt = snapshot.smoothedWatt,
             isCharging = snapshot.isCharging,
-            size = 230.dp
+            size = 230.dp,
+            isEstimated = snapshot.currentEstimated || snapshot.voltageEstimated
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -184,7 +185,11 @@ fun DashboardScreen(
                 unit = "mA",
                 icon = Icons.Default.Bolt,
                 accentColor = CyanPrimary,
-                subtitle = if (snapshot.isCharging) "Charging flow" else "Discharge rate",
+                subtitle = when {
+                    snapshot.currentEstimated -> "Estimated"
+                    snapshot.isCharging -> "Charging flow"
+                    else -> "Discharge rate"
+                },
                 modifier = Modifier.weight(1f)
             )
             MetricCard(
@@ -193,7 +198,7 @@ fun DashboardScreen(
                 unit = "V",
                 icon = Icons.Default.FlashOn,
                 accentColor = TealSecondary,
-                subtitle = "Cell potential",
+                subtitle = if (snapshot.voltageEstimated) "Estimated" else "Cell potential",
                 modifier = Modifier.weight(1f)
             )
         }

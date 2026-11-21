@@ -26,3 +26,13 @@ Aplikasi Android native untuk memantau pengisian daya baterai (charging) secara 
 
 ## Build via GitHub Actions
 Repository ini dilengkapi alur kerja GitHub Actions di `.github/workflows/build.yml`. Setiap push ke branch `main` atau `master` (atau melalui trigger manual `workflow_dispatch`) akan otomatis mengompilasi dan mengunggah APK Debug dan APK Release sebagai artifact yang dapat diunduh langsung tanpa Android Studio.
+
+## Penandatanganan Rilis
+Jika ingin menggunakan keystore pribadi di GitHub Actions, isi GitHub Secrets berikut: `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`.
+
+```bash
+keytool -genkeypair -v -keystore release.jks -alias wattmeter -keyalg RSA -keysize 2048 -validity 10000
+base64 -w 0 release.jks
+```
+
+Untuk build lokal, set `KEYSTORE_FILE`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, dan `KEY_PASSWORD` sebagai environment variable atau di `~/.gradle/gradle.properties`. Tanpa GitHub Secrets, alur kerja otomatis menggunakan release keystore yang terpasang di repository sehingga APK update dapat langsung di-install tanpa uninstall.

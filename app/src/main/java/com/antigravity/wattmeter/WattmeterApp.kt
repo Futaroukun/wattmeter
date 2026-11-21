@@ -3,11 +3,15 @@ package com.antigravity.wattmeter
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Build
+import androidx.core.content.ContextCompat
 import com.antigravity.wattmeter.data.local.AppDatabase
 import com.antigravity.wattmeter.data.preferences.PreferencesManager
 import com.antigravity.wattmeter.data.repository.BatteryReader
 import com.antigravity.wattmeter.data.repository.BatteryRepository
+import com.antigravity.wattmeter.receiver.PowerConnectionReceiver
 
 class WattmeterApp : Application() {
 
@@ -23,6 +27,20 @@ class WattmeterApp : Application() {
         instance = this
         batteryRepository
         createNotificationChannels()
+        registerPowerReceiver()
+    }
+
+    private fun registerPowerReceiver() {
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_POWER_CONNECTED)
+            addAction(Intent.ACTION_POWER_DISCONNECTED)
+        }
+        ContextCompat.registerReceiver(
+            this,
+            PowerConnectionReceiver(),
+            filter,
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
     }
 
     private fun createNotificationChannels() {

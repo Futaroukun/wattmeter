@@ -5,10 +5,12 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.Build
+import android.util.Log
 import com.antigravity.wattmeter.data.model.BatterySnapshot
 import com.antigravity.wattmeter.data.model.DiagnosticInfo
 import com.antigravity.wattmeter.data.model.UnitMultiplier
 import com.antigravity.wattmeter.data.model.UserSettings
+import com.antigravity.wattmeter.util.VoltageNormalizer
 import java.io.File
 import kotlin.math.abs
 
@@ -31,6 +33,8 @@ class BatteryReader(private val context: Context) {
         "/sys/class/power_supply/bms/voltage_now"
     )
 
+    private var lastSysfsScanTime = 0L
+    private var cachedSysfsChecked: List<Pair<String, String>> = emptyList()
     private var lastLevelCheckTime = 0L
     private var lastLevelPercent = -1
     private var empiricalCurrentMa = 0.0
@@ -50,7 +54,12 @@ class BatteryReader(private val context: Context) {
         }
 
         val rawVoltage = intent?.getIntExtra(BatteryManager.EXTRA_VOLTAGE, 0)?.toLong() ?: 0L
-        val voltageVolt = resolveVoltage(rawVoltage, levelPercent)
+        val voltageResult = VoltageNormalizer.resolve(
+            rawVoltage,
+            levelPercent,
+            sysfsVoltagePaths.asSequence().mapNotNull { readSysfsFile(it)?.toLongOrNull() }
+        )
+        val voltageVolt = voltageResult.volt
 
         val statusInt = intent?.getIntExtra(BatteryManager.EXTRA_STATUS, BatteryManager.BATTERY_STATUS_UNKNOWN)
             ?: BatteryManager.BATTERY_STATUS_UNKNOWN
@@ -96,17 +105,25 @@ class BatteryReader(private val context: Context) {
             dataSource = "Intent.EXTRA_MAX_CHARGING_CURRENT"
         }
 
-        for (path in sysfsCurrentPaths) {
-            val content = readSysfsFile(path)
-            sysfsChecked.add(Pair(path, content ?: "Unavailable / Unreadable"))
-            if (selectedRawCurrent == 0L) {
-                val parsedLong = content?.toLongOrNull()
-                if (parsedLong != null && isValidCurrent(parsedLong)) {
-                    selectedRawCurrent = parsedLong
-                    dataSource = "sysfs ($path)"
+        val scanNow = System.currentTimeMillis()
+        val needSysfsScan = selectedRawCurrent == 0L || scanNow - lastSysfsScanTime > SYSFS_SCAN_INTERVAL_MS
+        if (needSysfsScan) {
+            val scanned = mutableListOf<Pair<String, String>>()
+            for (path in sysfsCurrentPaths) {
+                val content = readSysfsFile(path)
+                scanned.add(Pair(path, content ?: "Unavailable / Unreadable"))
+                if (selectedRawCurrent == 0L) {
+                    val parsedLong = content?.toLongOrNull()
+                    if (parsedLong != null && isValidCurrent(parsedLong)) {
+                        selectedRawCurrent = parsedLong
+                        dataSource = "sysfs ($path)"
+                    }
                 }
             }
+            cachedSysfsChecked = scanned
+            lastSysfsScanTime = scanNow
         }
+        sysfsChecked.addAll(cachedSysfsChecked)
 
         if (selectedRawCurrent == 0L && isCharging && settings.estimateCurrentIfZero) {
             val now = System.currentTimeMillis()
@@ -195,6 +212,8 @@ class BatteryReader(private val context: Context) {
             capacityDesignMah = capacityDesignMah,
             chargeCounterUah = chargeCounterUah,
             currentDataSource = dataSource,
+            currentEstimated = isEstimated,
+            voltageEstimated = voltageResult.estimated,
             timestamp = System.currentTimeMillis()
         )
 
@@ -234,28 +253,6 @@ class BatteryReader(private val context: Context) {
         }
     }
 
-    private fun normalizeVoltage(raw: Long): Double {
-        val volt = when {
-            raw <= 0L -> 0.0
-            raw >= 100_000L -> raw / 1_000_000.0
-            raw >= 100L -> raw / 1000.0
-            else -> raw.toDouble()
-        }
-        return if (volt in 2.5..6.0) volt else 0.0
-    }
-
-    private fun resolveVoltage(rawIntent: Long, levelPercent: Int): Double {
-        val fromIntent = normalizeVoltage(rawIntent)
-        if (fromIntent > 0.0 && rawIntent >= 100L) return fromIntent
-
-        for (path in sysfsVoltagePaths) {
-            val fromSysfs = normalizeVoltage(readSysfsFile(path)?.toLongOrNull() ?: 0L)
-            if (fromSysfs > 0.0) return fromSysfs
-        }
-
-        return 3.5 + 0.008 * levelPercent.coerceIn(0, 100)
-    }
-
     private fun readSysfsFile(path: String): String? {
         return try {
             val file = File(path)
@@ -265,6 +262,7 @@ class BatteryReader(private val context: Context) {
                 null
             }
         } catch (e: Exception) {
+            Log.d(TAG, "Unable to read $path", e)
             null
         }
     }
@@ -308,7 +306,13 @@ class BatteryReader(private val context: Context) {
             val capacity = powerProfileClass.getMethod("getBatteryCapacity").invoke(powerProfile) as? Double
             capacity?.toInt() ?: -1
         } catch (e: Exception) {
+            Log.w(TAG, "Unable to read design capacity", e)
             -1
         }
+    }
+
+    private companion object {
+        const val TAG = "BatteryReader"
+        const val SYSFS_SCAN_INTERVAL_MS = 10_000L
     }
 }

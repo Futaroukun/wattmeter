@@ -1,7 +1,6 @@
 package com.antigravity.wattmeter.service
 
 import android.app.Notification
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
@@ -10,45 +9,53 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.glance.appwidget.updateAll
 import com.antigravity.wattmeter.MainActivity
 import com.antigravity.wattmeter.R
+import com.antigravity.wattmeter.WattmeterApp
 import com.antigravity.wattmeter.data.model.BatterySnapshot
 import com.antigravity.wattmeter.data.model.NotificationMetric
 import com.antigravity.wattmeter.data.model.UserSettings
-import com.antigravity.wattmeter.data.preferences.PreferencesManager
-import com.antigravity.wattmeter.data.repository.BatteryRepository
 import com.antigravity.wattmeter.widget.WattmeterWidget
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.Locale
 
 class ChargingMonitorService : Service() {
-    private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-    private lateinit var batteryRepository: BatteryRepository
-    private lateinit var preferencesManager: PreferencesManager
-    private lateinit var alarmHandler: AlarmHandler
-    private lateinit var notificationManager: NotificationManager
 
-    private var currentSettings = UserSettings()
-    private var hasBeenPlugged = false
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private var dataCollectionJob: Job? = null
     private var unplugJob: Job? = null
+
+    private lateinit var notificationManager: NotificationManager
+    private lateinit var alarmHandler: AlarmHandler
 
     override fun onCreate() {
         super.onCreate()
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        batteryRepository = BatteryRepository.getInstance(applicationContext)
-        preferencesManager = PreferencesManager(applicationContext)
         alarmHandler = AlarmHandler(this)
+        isRunning = true
 
-        createNotificationChannels()
+        val initialNotification = buildInitialNotification()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(
+                NOTIFICATION_ID_MONITORING,
+                initialNotification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+            )
+        } else {
+            startForeground(NOTIFICATION_ID_MONITORING, initialNotification)
+        }
+
         startObservingData()
     }
 
@@ -62,90 +69,98 @@ class ChargingMonitorService : Service() {
             return START_STICKY
         }
 
-        startForegroundWithNotification()
+        if (!isRunning) {
+            isRunning = true
+            startObservingData()
+        }
         return START_STICKY
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
-        isRunning = false
+        super.onDestroy()
+        stopMonitoring()
         alarmHandler.release()
         serviceScope.cancel()
-        super.onDestroy()
-    }
-
-    private fun createNotificationChannels() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val monitoringChannel = NotificationChannel(
-                CHANNEL_ID_MONITORING,
-                "Wattmeter Monitor",
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = "Active charging wattage monitoring"
-                setShowBadge(false)
-            }
-            notificationManager.createNotificationChannel(monitoringChannel)
-        }
-    }
-
-    private fun startForegroundWithNotification() {
-        val snapshot = latestSnapshot ?: BatterySnapshot()
-        val notification = buildMonitoringNotification(snapshot, currentSettings)
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            try {
-                startForeground(
-                    NOTIFICATION_ID_MONITORING,
-                    notification,
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
-                )
-            } catch (e: Exception) {
-                startForeground(NOTIFICATION_ID_MONITORING, notification)
-            }
-        } else {
-            startForeground(NOTIFICATION_ID_MONITORING, notification)
-        }
-        isRunning = true
     }
 
     private fun startObservingData() {
-        serviceScope.launch {
-            preferencesManager.userSettingsFlow.collectLatest { settings ->
-                currentSettings = settings
-                latestSnapshot?.let { snapshot ->
-                    updateNotification(snapshot, settings)
-                }
-            }
-        }
+        dataCollectionJob?.cancel()
+        val app = application as WattmeterApp
+        val repo = app.batteryRepository
+        val pref = app.preferencesManager
 
-        serviceScope.launch {
-            batteryRepository.snapshotFlow.collectLatest { snapshot ->
-                latestSnapshot = snapshot
-                handlePlugState(snapshot)
-                alarmHandler.checkThresholds(snapshot, currentSettings)
-                updateNotification(snapshot, currentSettings)
-                triggerWidgetUpdate()
+        dataCollectionJob = serviceScope.launch {
+            combine(repo.batterySnapshot, pref.userSettingsFlow) { snapshot, settings ->
+                Pair(snapshot, settings)
+            }.collect { (snapshot, settings) ->
+                handleSnapshotUpdate(snapshot, settings)
             }
         }
     }
 
-    private fun handlePlugState(snapshot: BatterySnapshot) {
-        val plugged = snapshot.plugType.isNotEmpty() && snapshot.plugType != "Battery"
-        if (plugged) {
-            hasBeenPlugged = true
-            unplugJob?.cancel()
-            unplugJob = null
-        } else if (hasBeenPlugged && unplugJob == null) {
-            unplugJob = serviceScope.launch {
-                delay(UNPLUG_GRACE_MS)
-                stopMonitoring()
+    private fun handleSnapshotUpdate(snapshot: BatterySnapshot, settings: UserSettings) {
+        if (settings.autoStopOnUnplug) {
+            if (!snapshot.isCharging) {
+                if (unplugJob == null) {
+                    unplugJob = serviceScope.launch {
+                        delay(UNPLUG_GRACE_MS)
+                        val latest = (application as WattmeterApp).batteryRepository.batterySnapshot.first()
+                        if (!latest.isCharging) {
+                            stopMonitoring()
+                        }
+                        unplugJob = null
+                    }
+                }
+            } else {
+                unplugJob?.cancel()
+                unplugJob = null
             }
         }
+
+        if (!isRunning) return
+
+        updateNotification(snapshot, settings)
+        alarmHandler.checkAndTriggerAlarms(snapshot, settings)
+        triggerWidgetUpdate()
+    }
+
+    private fun buildInitialNotification(): Notification {
+        val openIntent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val openPendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            openIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val stopIntent = Intent(this, ChargingMonitorService::class.java).apply {
+            action = ACTION_STOP
+        }
+        val stopPendingIntent = PendingIntent.getService(
+            this,
+            1,
+            stopIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        return NotificationCompat.Builder(this, CHANNEL_ID_MONITORING)
+            .setSmallIcon(R.drawable.ic_tile)
+            .setContentTitle("Wattmeter Active")
+            .setContentText("Monitoring charging telemetry...")
+            .setContentIntent(openPendingIntent)
+            .setOngoing(true)
+            .setOnlyAlertOnce(true)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .addAction(0, "Stop", stopPendingIntent)
+            .build()
     }
 
     private fun updateNotification(snapshot: BatterySnapshot, settings: UserSettings) {
-        if (!isRunning) return
         val notification = buildMonitoringNotification(snapshot, settings)
         notificationManager.notify(NOTIFICATION_ID_MONITORING, notification)
     }
@@ -155,6 +170,7 @@ class ChargingMonitorService : Service() {
             try {
                 WattmeterWidget().updateAll(applicationContext)
             } catch (e: Exception) {
+                Log.w(TAG, "Widget update failed", e)
             }
         }
     }
@@ -199,9 +215,10 @@ class ChargingMonitorService : Service() {
         }
 
         val contentTitle = "$primaryMetric • ${snapshot.levelPercent}% • $chargingTag"
+        val estimateTag = if (snapshot.currentEstimated || snapshot.voltageEstimated) "~" else ""
         val contentText = String.format(
             Locale.US,
-            "⚡ %.1f W • %.0f mA • %.2f V • %.1f°C",
+            "⚡ ${estimateTag}%.1f W • %.0f mA • %.2f V • %.1f°C",
             snapshot.smoothedWatt,
             snapshot.currentNowMa,
             snapshot.voltageVolt,
@@ -243,13 +260,10 @@ class ChargingMonitorService : Service() {
         const val CHANNEL_ID_MONITORING = "wattmeter_monitoring"
         const val NOTIFICATION_ID_MONITORING = 1001
         private const val UNPLUG_GRACE_MS = 3000L
+        private const val TAG = "ChargingMonitorService"
 
         @Volatile
         var isRunning: Boolean = false
-            private set
-
-        @Volatile
-        var latestSnapshot: BatterySnapshot? = null
             private set
     }
 }

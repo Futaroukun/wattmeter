@@ -15,5 +15,7 @@ data class BatterySnapshot(
     val capacityDesignMah: Int = -1,
     val chargeCounterUah: Long = 0L,
     val currentDataSource: String = "",
+    val currentEstimated: Boolean = false,
+    val voltageEstimated: Boolean = false,
     val timestamp: Long = System.currentTimeMillis()
 )
