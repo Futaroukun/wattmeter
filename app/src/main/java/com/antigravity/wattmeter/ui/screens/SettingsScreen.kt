@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -40,7 +39,6 @@ import com.antigravity.wattmeter.data.model.NotificationMetric
 import com.antigravity.wattmeter.data.model.ThemeMode
 import com.antigravity.wattmeter.data.model.UnitMultiplier
 import com.antigravity.wattmeter.ui.viewmodel.MainViewModel
-import com.antigravity.wattmeter.util.ShizukuManager
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -508,50 +506,6 @@ fun SettingsScreen(
                         valueRange = 35f..55f,
                         steps = 19
                     )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        SettingsSectionCard(title = "Shizuku Integration (Shell Access)") {
-            var shizukuAvailable by remember { mutableStateOf(ShizukuManager.isAvailable()) }
-            var shizukuPermission by remember { mutableStateOf(ShizukuManager.hasPermission()) }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Shizuku Status",
-                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
-                    )
-                    Text(
-                        text = when {
-                            shizukuPermission -> "Aktif & Izin Diberikan (UID 2000)"
-                            shizukuAvailable -> "Service Berjalan (Perlu Izin)"
-                            else -> "Tidak Berjalan / Belum Terpasang"
-                        },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = when {
-                            shizukuPermission -> MaterialTheme.colorScheme.primary
-                            shizukuAvailable -> MaterialTheme.colorScheme.tertiary
-                            else -> MaterialTheme.colorScheme.outline
-                        }
-                    )
-                }
-
-                if (shizukuAvailable && !shizukuPermission) {
-                    Button(
-                        onClick = {
-                            ShizukuManager.requestPermission()
-                            shizukuPermission = ShizukuManager.hasPermission()
-                        }
-                    ) {
-                        Text("Minta Izin")
-                    }
                 }
             }
         }

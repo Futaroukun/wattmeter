@@ -5,4 +5,3 @@
 -keep class com.antigravity.wattmeter.data.model.** { *; }
 -keep class androidx.room.** { *; }
 -dontwarn com.android.internal.os.PowerProfile
--keep class rikka.shizuku.** { *; }

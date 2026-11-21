@@ -245,10 +245,6 @@ class MainViewModel(
         }
     }
 
-    fun refreshBatteryData() {
-        repository.refreshNow()
-    }
-
     fun exportCsv(context: Context): Boolean {
         return CsvExporter.exportAndShare(context, sessions.value)
     }

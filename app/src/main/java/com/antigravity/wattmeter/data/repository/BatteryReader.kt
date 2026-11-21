@@ -9,7 +9,6 @@ import com.antigravity.wattmeter.data.model.BatterySnapshot
 import com.antigravity.wattmeter.data.model.DiagnosticInfo
 import com.antigravity.wattmeter.data.model.UnitMultiplier
 import com.antigravity.wattmeter.data.model.UserSettings
-import com.antigravity.wattmeter.util.ShizukuManager
 import java.io.File
 import kotlin.math.abs
 
@@ -105,33 +104,6 @@ class BatteryReader(private val context: Context) {
                 if (parsedLong != null && isValidCurrent(parsedLong)) {
                     selectedRawCurrent = parsedLong
                     dataSource = "sysfs ($path)"
-                }
-            }
-        }
-
-        if (selectedRawCurrent == 0L && ShizukuManager.hasPermission()) {
-            for (path in sysfsCurrentPaths) {
-                val content = ShizukuManager.readSysfs(path)
-                if (!content.isNullOrEmpty()) {
-                    val parsedLong = content.toLongOrNull()
-                    if (parsedLong != null && isValidCurrent(parsedLong)) {
-                        selectedRawCurrent = parsedLong
-                        dataSource = "Shizuku sysfs ($path)"
-                        break
-                    }
-                }
-            }
-            if (selectedRawCurrent == 0L) {
-                val dump = ShizukuManager.readDumpsysBattery()
-                if (!dump.isNullOrEmpty()) {
-                    val curMatch = Regex("""(?i)current_now:\s*(-?\d+)""").find(dump)
-                    val maxCurMatch = Regex("""(?i)Max charging current:\s*(\d+)""").find(dump)
-                    val targetCur = curMatch?.groupValues?.get(1)?.toLongOrNull()
-                        ?: maxCurMatch?.groupValues?.get(1)?.toLongOrNull()
-                    if (targetCur != null && isValidCurrent(targetCur)) {
-                        selectedRawCurrent = targetCur
-                        dataSource = "Shizuku dumpsys battery"
-                    }
                 }
             }
         }
@@ -275,13 +247,6 @@ class BatteryReader(private val context: Context) {
     private fun resolveVoltage(rawIntent: Long, levelPercent: Int): Double {
         val fromIntent = normalizeVoltage(rawIntent)
         if (fromIntent > 0.0 && rawIntent >= 100L) return fromIntent
-
-        if (ShizukuManager.hasPermission()) {
-            for (path in sysfsVoltagePaths) {
-                val fromShizuku = normalizeVoltage(ShizukuManager.readSysfs(path)?.toLongOrNull() ?: 0L)
-                if (fromShizuku > 0.0) return fromShizuku
-            }
-        }
 
         for (path in sysfsVoltagePaths) {
             val fromSysfs = normalizeVoltage(readSysfsFile(path)?.toLongOrNull() ?: 0L)
