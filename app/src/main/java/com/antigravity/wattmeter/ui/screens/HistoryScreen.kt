@@ -85,28 +85,37 @@ fun HistoryScreen(
                 )
             }
 
-            Row {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 FilledTonalButton(
                     onClick = { viewModel.exportCsv(context) },
                     enabled = sessions.isNotEmpty(),
-                    shape = RoundedCornerShape(10.dp)
+                    shape = RoundedCornerShape(18.dp),
+                    modifier = Modifier.height(36.dp),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.FileDownload,
                         contentDescription = "Export CSV",
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = "CSV")
+                    Text(
+                        text = "CSV",
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold)
+                    )
                 }
 
                 if (sessions.isNotEmpty()) {
-                    Spacer(modifier = Modifier.width(8.dp))
-                    IconButton(onClick = { showClearConfirm = true }) {
+                    Spacer(modifier = Modifier.width(6.dp))
+                    IconButton(
+                        onClick = { showClearConfirm = true },
+                        modifier = Modifier.size(36.dp)
+                    ) {
                         Icon(
                             imageVector = Icons.Default.DeleteSweep,
                             contentDescription = "Clear All",
-                            tint = DangerRed
+                            tint = DangerRed,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }

@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -172,8 +173,12 @@ fun DiagnosticBanner(
                         colors = ButtonDefaults.outlinedButtonColors(
                             contentColor = MaterialTheme.colorScheme.primary
                         ),
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.fillMaxWidth()
+                        shape = RoundedCornerShape(19.dp),
+                        modifier = Modifier
+                            .fillMaxWidth(0.9f)
+                            .height(38.dp)
+                            .align(Alignment.CenterHorizontally),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.SwapVert,
@@ -182,7 +187,8 @@ fun DiagnosticBanner(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = if (diagnosticInfo.signReversed) "Sign Inverted (Active)" else "Toggle Invert Sign"
+                            text = if (diagnosticInfo.signReversed) "Sign Inverted (Active)" else "Toggle Invert Sign",
+                            style = MaterialTheme.typography.labelMedium
                         )
                     }
                 }

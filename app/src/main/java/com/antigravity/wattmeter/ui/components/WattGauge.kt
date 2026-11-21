@@ -119,6 +119,7 @@ fun WattGauge(
         }
 
         Column(
+            modifier = Modifier.padding(top = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -130,7 +131,7 @@ fun WattGauge(
                     text = String.format(Locale.US, "%.1f", displayWatt),
                     style = MaterialTheme.typography.displayMedium.copy(
                         fontWeight = FontWeight.ExtraBold,
-                        fontSize = 46.sp
+                        fontSize = 42.sp
                     ),
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -138,10 +139,10 @@ fun WattGauge(
                     text = "W",
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp
+                        fontSize = 19.sp
                     ),
                     color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(bottom = 6.dp, start = 4.dp)
+                    modifier = Modifier.padding(bottom = 5.dp, start = 4.dp)
                 )
             }
 

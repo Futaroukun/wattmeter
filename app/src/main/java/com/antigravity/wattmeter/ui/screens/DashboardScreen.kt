@@ -161,7 +161,7 @@ fun DashboardScreen(
             watt = snapshot.watt,
             smoothedWatt = snapshot.smoothedWatt,
             isCharging = snapshot.isCharging,
-            size = 250.dp
+            size = 230.dp
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -184,6 +184,7 @@ fun DashboardScreen(
                 unit = "mA",
                 icon = Icons.Default.Bolt,
                 accentColor = CyanPrimary,
+                subtitle = if (snapshot.isCharging) "Charging flow" else "Discharge rate",
                 modifier = Modifier.weight(1f)
             )
             MetricCard(
@@ -192,6 +193,7 @@ fun DashboardScreen(
                 unit = "V",
                 icon = Icons.Default.FlashOn,
                 accentColor = TealSecondary,
+                subtitle = "Cell potential",
                 modifier = Modifier.weight(1f)
             )
         }
@@ -208,6 +210,7 @@ fun DashboardScreen(
                 unit = "°C",
                 icon = Icons.Default.Thermostat,
                 accentColor = tempColor,
+                subtitle = if (snapshot.temperatureCelsius >= 40f) "High temp" else "Normal range",
                 modifier = Modifier.weight(1f)
             )
             MetricCard(
@@ -216,6 +219,7 @@ fun DashboardScreen(
                 unit = "%",
                 icon = Icons.Default.BatteryChargingFull,
                 accentColor = SuccessGreen,
+                subtitle = "Health: ${snapshot.health}",
                 modifier = Modifier.weight(1f)
             )
         }
@@ -232,6 +236,7 @@ fun DashboardScreen(
                 unit = "",
                 icon = Icons.Default.Schedule,
                 accentColor = MaterialTheme.colorScheme.tertiary,
+                subtitle = if (snapshot.isCharging) "Charging session" else "Idle timer",
                 modifier = Modifier.weight(1f)
             )
             MetricCard(
@@ -240,18 +245,19 @@ fun DashboardScreen(
                 unit = "",
                 icon = Icons.Default.Power,
                 accentColor = WarningAmber,
+                subtitle = if (snapshot.isCharging && snapshot.levelPercent < 100) "Target 100%" else "Battery full",
                 modifier = Modifier.weight(1f)
             )
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(18.dp))
 
         Button(
             onClick = { viewModel.toggleMonitoringService(context) },
             modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp),
-            shape = RoundedCornerShape(14.dp),
+                .fillMaxWidth(0.88f)
+                .height(46.dp),
+            shape = RoundedCornerShape(23.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = if (isServiceRunning) DangerRed else MaterialTheme.colorScheme.primary,
                 contentColor = if (isServiceRunning) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onPrimary
@@ -259,12 +265,13 @@ fun DashboardScreen(
         ) {
             Icon(
                 imageVector = if (isServiceRunning) Icons.Default.Stop else Icons.Default.PlayArrow,
-                contentDescription = "Toggle Monitor"
+                contentDescription = "Toggle Monitor",
+                modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = if (isServiceRunning) "Stop Foreground Monitor" else "Start Foreground Monitor",
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
             )
         }
 
