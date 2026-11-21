@@ -31,10 +31,14 @@ class PreferencesManager(private val context: Context) {
         private val KEY_MOVING_AVG_WINDOW = intPreferencesKey("moving_avg_window")
         private val KEY_NOTIFICATION_METRIC = stringPreferencesKey("notification_metric")
         private val KEY_ALARM_FULL_BATTERY = booleanPreferencesKey("alarm_full_battery")
+        private val KEY_ALARM_LEVEL_ENABLED = booleanPreferencesKey("alarm_level_enabled")
         private val KEY_ALARM_LEVEL_THRESHOLD = intPreferencesKey("alarm_level_threshold")
+        private val KEY_ALARM_TEMP_ENABLED = booleanPreferencesKey("alarm_temp_enabled")
         private val KEY_ALARM_TEMP_THRESHOLD = floatPreferencesKey("alarm_temp_threshold")
         private val KEY_AUTO_START_ON_BOOT = booleanPreferencesKey("auto_start_on_boot")
         private val KEY_AUTO_START_ON_PLUG = booleanPreferencesKey("auto_start_on_plug")
+        private val KEY_ESTIMATE_CURRENT_IF_ZERO = booleanPreferencesKey("estimate_current_if_zero")
+        private val KEY_CHARGER_WATTAGE_RATING = intPreferencesKey("charger_wattage_rating")
     }
 
     val userSettingsFlow: Flow<UserSettings> = context.dataStore.data
@@ -60,11 +64,15 @@ class PreferencesManager(private val context: Context) {
             val notifMetricStr = preferences[KEY_NOTIFICATION_METRIC] ?: NotificationMetric.WATT.name
             val notifMetric = runCatching { NotificationMetric.valueOf(notifMetricStr) }.getOrDefault(NotificationMetric.WATT)
 
-            val alarmFull = preferences[KEY_ALARM_FULL_BATTERY] ?: true
+            val alarmFull = preferences[KEY_ALARM_FULL_BATTERY] ?: false
+            val alarmLevelEnabled = preferences[KEY_ALARM_LEVEL_ENABLED] ?: false
             val alarmLevel = preferences[KEY_ALARM_LEVEL_THRESHOLD] ?: 80
+            val alarmTempEnabled = preferences[KEY_ALARM_TEMP_ENABLED] ?: false
             val alarmTemp = preferences[KEY_ALARM_TEMP_THRESHOLD] ?: 42.0f
             val autoStartBoot = preferences[KEY_AUTO_START_ON_BOOT] ?: false
             val autoStartPlug = preferences[KEY_AUTO_START_ON_PLUG] ?: true
+            val estimateCurrent = preferences[KEY_ESTIMATE_CURRENT_IF_ZERO] ?: true
+            val chargerWattage = preferences[KEY_CHARGER_WATTAGE_RATING] ?: 18
 
             UserSettings(
                 themeMode = themeMode,
@@ -74,10 +82,14 @@ class PreferencesManager(private val context: Context) {
                 movingAvgWindow = movingAvgWindow,
                 notificationMetric = notifMetric,
                 alarmFullBattery = alarmFull,
+                alarmLevelEnabled = alarmLevelEnabled,
                 alarmLevelThreshold = alarmLevel,
+                alarmTempEnabled = alarmTempEnabled,
                 alarmTempThreshold = alarmTemp,
                 autoStartOnBoot = autoStartBoot,
-                autoStartOnPlug = autoStartPlug
+                autoStartOnPlug = autoStartPlug,
+                estimateCurrentIfZero = estimateCurrent,
+                chargerWattageRating = chargerWattage
             )
         }
 
@@ -109,8 +121,16 @@ class PreferencesManager(private val context: Context) {
         context.dataStore.edit { it[KEY_ALARM_FULL_BATTERY] = enabled }
     }
 
+    suspend fun setAlarmLevelEnabled(enabled: Boolean) {
+        context.dataStore.edit { it[KEY_ALARM_LEVEL_ENABLED] = enabled }
+    }
+
     suspend fun setAlarmLevelThreshold(threshold: Int) {
         context.dataStore.edit { it[KEY_ALARM_LEVEL_THRESHOLD] = threshold }
+    }
+
+    suspend fun setAlarmTempEnabled(enabled: Boolean) {
+        context.dataStore.edit { it[KEY_ALARM_TEMP_ENABLED] = enabled }
     }
 
     suspend fun setAlarmTempThreshold(threshold: Float) {
@@ -123,5 +143,13 @@ class PreferencesManager(private val context: Context) {
 
     suspend fun setAutoStartOnPlug(enabled: Boolean) {
         context.dataStore.edit { it[KEY_AUTO_START_ON_PLUG] = enabled }
+    }
+
+    suspend fun setEstimateCurrentIfZero(enabled: Boolean) {
+        context.dataStore.edit { it[KEY_ESTIMATE_CURRENT_IF_ZERO] = enabled }
+    }
+
+    suspend fun setChargerWattageRating(wattage: Int) {
+        context.dataStore.edit { it[KEY_CHARGER_WATTAGE_RATING] = wattage }
     }
 }

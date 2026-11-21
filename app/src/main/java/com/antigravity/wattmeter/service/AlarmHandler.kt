@@ -55,8 +55,17 @@ class AlarmHandler(private val context: Context) {
         val level = snapshot.levelPercent
         val temp = snapshot.temperatureCelsius
 
-        if (settings.alarmFullBattery) {
-            val isFull = (level >= 100) || (!isCharging && wasCharging && level >= 99)
+        if (!wasCharging && isCharging) {
+            if (level >= settings.alarmLevelThreshold) {
+                wasLevelAlarmTriggered = true
+            }
+            if (level >= 99) {
+                wasFullAlarmTriggered = true
+            }
+        }
+
+        if (settings.alarmFullBattery && isCharging) {
+            val isFull = (level >= 100)
             if (isFull && !wasFullAlarmTriggered) {
                 wasFullAlarmTriggered = true
                 triggerAlarm(
@@ -69,8 +78,8 @@ class AlarmHandler(private val context: Context) {
             }
         }
 
-        if (settings.alarmLevelThreshold in 1..99) {
-            val targetReached = isCharging && level >= settings.alarmLevelThreshold
+        if (settings.alarmLevelEnabled && settings.alarmLevelThreshold in 1..99 && isCharging) {
+            val targetReached = level >= settings.alarmLevelThreshold
             if (targetReached && !wasLevelAlarmTriggered) {
                 wasLevelAlarmTriggered = true
                 triggerAlarm(
@@ -83,7 +92,7 @@ class AlarmHandler(private val context: Context) {
             }
         }
 
-        if (settings.alarmTempThreshold > 0.0f) {
+        if (settings.alarmTempEnabled && settings.alarmTempThreshold > 0.0f) {
             val isOverheat = temp >= settings.alarmTempThreshold
             if (isOverheat && !wasTempAlarmTriggered) {
                 wasTempAlarmTriggered = true
@@ -115,15 +124,14 @@ class AlarmHandler(private val context: Context) {
     private fun playSound() {
         try {
             stopSound()
-            val alertUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+            val alertUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
                 ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
 
             mediaPlayer = MediaPlayer().apply {
                 setDataSource(context, alertUri)
                 setAudioAttributes(
                     AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_ALARM)
+                        .setUsage(AudioAttributes.USAGE_NOTIFICATION)
                         .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                         .build()
                 )
@@ -145,7 +153,7 @@ class AlarmHandler(private val context: Context) {
                 context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
             }
 
-            val pattern = longArrayOf(0, 500, 200, 500, 200, 500)
+            val pattern = longArrayOf(0, 400, 200, 400)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 vibrator?.vibrate(VibrationEffect.createWaveform(pattern, -1))
             } else {
@@ -182,8 +190,8 @@ class AlarmHandler(private val context: Context) {
             .setContentTitle(title)
             .setContentText(text)
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
-            .setPriority(NotificationCompat.PRIORITY_MAX)
-            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_EVENT)
             .setContentIntent(contentPendingIntent)
             .setDeleteIntent(dismissPendingIntent)
             .addAction(0, "Dismiss", dismissPendingIntent)

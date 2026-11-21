@@ -55,6 +55,7 @@ fun SettingsScreen(
     var unitMenuExpanded by remember { mutableStateOf(false) }
     var windowMenuExpanded by remember { mutableStateOf(false) }
     var metricMenuExpanded by remember { mutableStateOf(false) }
+    var wattageMenuExpanded by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
@@ -229,6 +230,64 @@ fun SettingsScreen(
                     onCheckedChange = { viewModel.toggleInvertSign() }
                 )
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Smart Estimation Mode",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Real-time watt estimation for devices with locked HAL (OPPO/MediaTek)",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.outline
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Switch(
+                    checked = userSettings.estimateCurrentIfZero,
+                    onCheckedChange = { viewModel.setEstimateCurrentIfZero(it) }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            ExposedDropdownMenuBox(
+                expanded = wattageMenuExpanded,
+                onExpandedChange = { wattageMenuExpanded = it }
+            ) {
+                OutlinedTextField(
+                    value = "${userSettings.chargerWattageRating} W",
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Charger Rated Power") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = wattageMenuExpanded) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor()
+                )
+                ExposedDropdownMenu(
+                    expanded = wattageMenuExpanded,
+                    onDismissRequest = { wattageMenuExpanded = false }
+                ) {
+                    listOf(10, 18, 33, 44, 67, 80).forEach { wattage ->
+                        DropdownMenuItem(
+                            text = { Text("$wattage W") },
+                            onClick = {
+                                viewModel.setChargerWattageRating(wattage)
+                                wattageMenuExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -327,12 +386,12 @@ fun SettingsScreen(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Full Battery Alarm",
+                        text = "Full Battery Notification",
                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Sound alarm when battery reaches 100%",
+                        text = "Notify when battery reaches 100%",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.outline
                     )
@@ -346,54 +405,108 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            Column {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Battery Level Alarm Threshold",
+                        text = "Target Level Notification",
                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "${userSettings.alarmLevelThreshold}%",
-                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.primary
+                        text = "Notify when battery reaches target charge percent",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.outline
                     )
                 }
-                Slider(
-                    value = userSettings.alarmLevelThreshold.toFloat(),
-                    onValueChange = { viewModel.setAlarmLevelThreshold(it.toInt()) },
-                    valueRange = 50f..100f,
-                    steps = 9
+                Spacer(modifier = Modifier.width(8.dp))
+                Switch(
+                    checked = userSettings.alarmLevelEnabled,
+                    onCheckedChange = { viewModel.setAlarmLevelEnabled(it) }
                 )
+            }
+
+            if (userSettings.alarmLevelEnabled) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Target Level Threshold",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "${userSettings.alarmLevelThreshold}%",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Slider(
+                        value = userSettings.alarmLevelThreshold.toFloat(),
+                        onValueChange = { viewModel.setAlarmLevelThreshold(it.toInt()) },
+                        valueRange = 50f..100f,
+                        steps = 9
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            Column {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Overheat Alarm Threshold",
+                        text = "Overheat Protection Alert",
                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = String.format(Locale.US, "%.1f °C", userSettings.alarmTempThreshold),
-                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.error
+                        text = "Alert when temperature exceeds threshold",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.outline
                     )
                 }
-                Slider(
-                    value = userSettings.alarmTempThreshold,
-                    onValueChange = { viewModel.setAlarmTempThreshold(it) },
-                    valueRange = 35f..55f,
-                    steps = 19
+                Spacer(modifier = Modifier.width(8.dp))
+                Switch(
+                    checked = userSettings.alarmTempEnabled,
+                    onCheckedChange = { viewModel.setAlarmTempEnabled(it) }
                 )
+            }
+
+            if (userSettings.alarmTempEnabled) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Overheat Threshold",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = String.format(Locale.US, "%.1f °C", userSettings.alarmTempThreshold),
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                    Slider(
+                        value = userSettings.alarmTempThreshold,
+                        onValueChange = { viewModel.setAlarmTempThreshold(it) },
+                        valueRange = 35f..55f,
+                        steps = 19
+                    )
+                }
             }
         }
 

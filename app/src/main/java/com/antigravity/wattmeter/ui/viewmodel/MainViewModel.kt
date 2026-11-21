@@ -179,15 +179,39 @@ class MainViewModel(
         }
     }
 
+    fun setAlarmLevelEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.preferencesManager.setAlarmLevelEnabled(enabled)
+        }
+    }
+
     fun setAlarmLevelThreshold(threshold: Int) {
         viewModelScope.launch {
             repository.preferencesManager.setAlarmLevelThreshold(threshold)
         }
     }
 
+    fun setAlarmTempEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.preferencesManager.setAlarmTempEnabled(enabled)
+        }
+    }
+
     fun setAlarmTempThreshold(threshold: Float) {
         viewModelScope.launch {
             repository.preferencesManager.setAlarmTempThreshold(threshold)
+        }
+    }
+
+    fun setEstimateCurrentIfZero(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.preferencesManager.setEstimateCurrentIfZero(enabled)
+        }
+    }
+
+    fun setChargerWattageRating(wattage: Int) {
+        viewModelScope.launch {
+            repository.preferencesManager.setChargerWattageRating(wattage)
         }
     }
 

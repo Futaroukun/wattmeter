@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
+import android.os.Build
 import com.antigravity.wattmeter.data.model.BatterySnapshot
 import com.antigravity.wattmeter.data.model.DiagnosticInfo
 import com.antigravity.wattmeter.data.model.UnitMultiplier
@@ -17,9 +18,16 @@ class BatteryReader(private val context: Context) {
     private val sysfsCurrentPaths = listOf(
         "/sys/class/power_supply/battery/current_now",
         "/sys/class/power_supply/battery/batt_current_now",
-        "/sys/class/power_supply/battery/voltage_now",
-        "/sys/class/power_supply/bms/current_now"
+        "/sys/class/power_supply/battery/current_avg",
+        "/sys/class/power_supply/bms/current_now",
+        "/sys/class/power_supply/usb/current_now",
+        "/sys/class/power_supply/main/current_now",
+        "/sys/class/power_supply/charger/current_now"
     )
+
+    private var lastLevelCheckTime = 0L
+    private var lastLevelPercent = -1
+    private var empiricalCurrentMa = 0.0
 
     fun readBattery(settings: UserSettings): Pair<BatterySnapshot, DiagnosticInfo> {
         val intent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
@@ -55,15 +63,29 @@ class BatteryReader(private val context: Context) {
 
         val technology = intent?.getStringExtra(BatteryManager.EXTRA_TECHNOLOGY) ?: "Unknown"
 
-        val chargeCounterUah = batteryManager?.getLongProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER) ?: 0L
+        val chargeCounterUah = batteryManager?.getLongProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER)
+            ?: batteryManager?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER)?.toLong()
+            ?: 0L
         val capacityDesignMah = readDesignCapacity()
 
-        val currentNowRaw = batteryManager?.getLongProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW) ?: 0L
-        val currentAverageRaw = batteryManager?.getLongProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_AVERAGE) ?: 0L
+        val curNowLong = batteryManager?.getLongProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW) ?: 0L
+        val curNowInt = batteryManager?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)?.toLong() ?: 0L
+        val currentNowRaw = if (isValidCurrent(curNowLong)) curNowLong else curNowInt
+
+        val curAvgLong = batteryManager?.getLongProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_AVERAGE) ?: 0L
+        val curAvgInt = batteryManager?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_AVERAGE)?.toLong() ?: 0L
+        val currentAverageRaw = if (isValidCurrent(curAvgLong)) curAvgLong else curAvgInt
+
+        val maxCurrentFromIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            intent?.getIntExtra(BatteryManager.EXTRA_MAX_CHARGING_CURRENT, -1)?.toLong() ?: -1L
+        } else {
+            -1L
+        }
 
         val sysfsChecked = mutableListOf<Pair<String, String>>()
         var selectedRawCurrent = 0L
         var dataSource = "None"
+        var isEstimated = false
 
         if (isValidCurrent(currentNowRaw)) {
             selectedRawCurrent = currentNowRaw
@@ -71,12 +93,15 @@ class BatteryReader(private val context: Context) {
         } else if (isValidCurrent(currentAverageRaw)) {
             selectedRawCurrent = currentAverageRaw
             dataSource = "BatteryManager.BATTERY_PROPERTY_CURRENT_AVERAGE"
+        } else if (isValidCurrent(maxCurrentFromIntent)) {
+            selectedRawCurrent = maxCurrentFromIntent
+            dataSource = "BatteryManager.EXTRA_MAX_CHARGING_CURRENT"
         }
 
         for (path in sysfsCurrentPaths) {
             val content = readSysfsFile(path)
             sysfsChecked.add(Pair(path, content ?: "Unavailable / Unreadable"))
-            if (selectedRawCurrent == 0L && path != "/sys/class/power_supply/battery/voltage_now") {
+            if (selectedRawCurrent == 0L) {
                 val parsedLong = content?.toLongOrNull()
                 if (parsedLong != null && isValidCurrent(parsedLong)) {
                     selectedRawCurrent = parsedLong
@@ -85,22 +110,76 @@ class BatteryReader(private val context: Context) {
             }
         }
 
-        val (currentMa, detectedUnit) = convertToMilliamperes(selectedRawCurrent, settings.unitMultiplier)
+        if (selectedRawCurrent == 0L && isCharging && settings.estimateCurrentIfZero) {
+            val now = System.currentTimeMillis()
+            if (lastLevelPercent in 0..99 && levelPercent > lastLevelPercent && lastLevelCheckTime > 0) {
+                val elapsedSec = (now - lastLevelCheckTime) / 1000.0
+                if (elapsedSec > 5.0) {
+                    val capacity = if (capacityDesignMah > 1000) capacityDesignMah else 5000
+                    val deltaPercent = levelPercent - lastLevelPercent
+                    val calculatedMa = (deltaPercent.toDouble() / 100.0) * capacity * (3600.0 / elapsedSec)
+                    if (calculatedMa in 200.0..12000.0) {
+                        empiricalCurrentMa = calculatedMa
+                    }
+                }
+            }
+            lastLevelPercent = levelPercent
+            lastLevelCheckTime = now
 
-        val finalCurrentMa = if (settings.invertCurrentSign) {
+            val targetWatt = if (empiricalCurrentMa > 100.0) {
+                val empiricalWatt = (empiricalCurrentMa / 1000.0) * (if (voltageVolt > 0.0) voltageVolt else 4.0)
+                empiricalWatt
+            } else {
+                val maxRatedWatt = settings.chargerWattageRating.toDouble()
+                when (plugType) {
+                    "USB" -> 2.5
+                    "Wireless" -> 7.5
+                    else -> {
+                        when {
+                            levelPercent < 60 -> maxRatedWatt
+                            levelPercent < 75 -> maxRatedWatt * 0.78
+                            levelPercent < 85 -> maxRatedWatt * 0.52
+                            levelPercent < 93 -> maxRatedWatt * 0.30
+                            levelPercent < 98 -> maxRatedWatt * 0.16
+                            else -> 2.5
+                        }
+                    }
+                }
+            }
+
+            val effectiveVolt = if (voltageVolt > 2.0) voltageVolt else 4.0
+            val computedCurrentMa = (targetWatt / effectiveVolt) * 1000.0
+            selectedRawCurrent = (computedCurrentMa * 1000.0).toLong()
+            dataSource = "Estimasi Cerdas (OPPO/MediaTek HAL)"
+            isEstimated = true
+        }
+
+        val (currentMa, detectedUnit) = if (isEstimated) {
+            Pair(selectedRawCurrent / 1000.0, "Estimasi")
+        } else {
+            convertToMilliamperes(selectedRawCurrent, settings.unitMultiplier)
+        }
+
+        val finalCurrentMa = if (settings.invertCurrentSign && !isEstimated) {
             -currentMa
         } else {
             currentMa
         }
 
-        val watt = (abs(finalCurrentMa) / 1000.0) * voltageVolt
+        val watt = (abs(finalCurrentMa) / 1000.0) * (if (voltageVolt > 0.0) voltageVolt else 4.0)
 
         val isZeroCurrentWarning = (selectedRawCurrent == 0L || !isValidCurrent(selectedRawCurrent))
 
-        val explanation = if (isZeroCurrentWarning) {
-            "Zero current detected. BatteryManager CURRENT_NOW: $currentNowRaw, CURRENT_AVERAGE: $currentAverageRaw. Sysfs paths checked: ${sysfsChecked.joinToString { "${it.first}='${it.second}'" }}. The OEM kernel or device firmware may restrict battery current access."
-        } else {
-            "Successfully read from $dataSource ($detectedUnit)."
+        val explanation = when {
+            isEstimated -> {
+                "Chipset MediaTek mt6768 / ColorOS membatasi driver CURRENT_NOW ke pihak ketiga. Mode Estimasi Cerdas aktif menghitung watt secara real time."
+            }
+            isZeroCurrentWarning -> {
+                "Sensor arus perangkat melaporkan 0 mA. Driver CURRENT_NOW dibatasi oleh kernel OEM perangkat ini."
+            }
+            else -> {
+                "Berhasil membaca data dari $dataSource ($detectedUnit)."
+            }
         }
 
         val snapshot = BatterySnapshot(
