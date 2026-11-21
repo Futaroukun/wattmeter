@@ -43,16 +43,7 @@ jobs:
           echo "KEYSTORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
 
       - name: Run Unit Tests
-        run: |
-          ./gradlew testDebugUnitTest --no-daemon > test_err.log 2>&1 || {
-            grep -E "(e: |error: |FAILURE: |Caused by: )" test_err.log | head -n 15 | while IFS= read -r line; do
-              echo "::error title=CompilerError::$line"
-            done
-            tail -n 25 test_err.log | while IFS= read -r line; do
-              echo "::error title=GradleTail::$line"
-            done
-            exit 1
-          }
+        run: ./gradlew testDebugUnitTest --no-daemon
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug --no-daemon
