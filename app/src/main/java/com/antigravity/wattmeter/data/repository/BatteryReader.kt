@@ -76,11 +76,7 @@ class BatteryReader(private val context: Context) {
         val curAvgInt = batteryManager?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_AVERAGE)?.toLong() ?: 0L
         val currentAverageRaw = if (isValidCurrent(curAvgLong)) curAvgLong else curAvgInt
 
-        val maxCurrentFromIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            intent?.getIntExtra(BatteryManager.EXTRA_MAX_CHARGING_CURRENT, -1)?.toLong() ?: -1L
-        } else {
-            -1L
-        }
+        val maxCurrentFromIntent = intent?.getIntExtra("max_charging_current", -1)?.toLong() ?: -1L
 
         val sysfsChecked = mutableListOf<Pair<String, String>>()
         var selectedRawCurrent = 0L
@@ -95,7 +91,7 @@ class BatteryReader(private val context: Context) {
             dataSource = "BatteryManager.BATTERY_PROPERTY_CURRENT_AVERAGE"
         } else if (isValidCurrent(maxCurrentFromIntent)) {
             selectedRawCurrent = maxCurrentFromIntent
-            dataSource = "BatteryManager.EXTRA_MAX_CHARGING_CURRENT"
+            dataSource = "Intent.EXTRA_MAX_CHARGING_CURRENT"
         }
 
         for (path in sysfsCurrentPaths) {
