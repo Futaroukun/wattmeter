@@ -25,19 +25,18 @@ class BatteryReader(private val context: Context) {
         "/sys/class/power_supply/charger/current_now"
     )
 
+    private val sysfsVoltagePaths = listOf(
+        "/sys/class/power_supply/battery/voltage_now",
+        "/sys/class/power_supply/battery/batt_vol",
+        "/sys/class/power_supply/bms/voltage_now"
+    )
+
     private var lastLevelCheckTime = 0L
     private var lastLevelPercent = -1
     private var empiricalCurrentMa = 0.0
 
     fun readBattery(settings: UserSettings): Pair<BatterySnapshot, DiagnosticInfo> {
         val intent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-
-        val rawVoltage = intent?.getIntExtra(BatteryManager.EXTRA_VOLTAGE, 0) ?: 0
-        val voltageVolt = if (rawVoltage > 0) {
-            rawVoltage / 1000.0
-        } else {
-            readSysfsVoltage()
-        }
 
         val rawTemp = intent?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0) ?: 0
         val temperatureCelsius = rawTemp / 10.0f
@@ -49,6 +48,9 @@ class BatteryReader(private val context: Context) {
         } else {
             rawLevel.coerceAtLeast(0)
         }
+
+        val rawVoltage = intent?.getIntExtra(BatteryManager.EXTRA_VOLTAGE, 0)?.toLong() ?: 0L
+        val voltageVolt = resolveVoltage(rawVoltage, levelPercent)
 
         val statusInt = intent?.getIntExtra(BatteryManager.EXTRA_STATUS, BatteryManager.BATTERY_STATUS_UNKNOWN)
             ?: BatteryManager.BATTERY_STATUS_UNKNOWN
@@ -232,15 +234,26 @@ class BatteryReader(private val context: Context) {
         }
     }
 
-    private fun readSysfsVoltage(): Double {
-        val path = "/sys/class/power_supply/battery/voltage_now"
-        val content = readSysfsFile(path)
-        val raw = content?.toLongOrNull() ?: return 0.0
-        return when {
-            raw > 1_000_000L -> raw / 1_000_000.0
-            raw > 1000L -> raw / 1000.0
+    private fun normalizeVoltage(raw: Long): Double {
+        val volt = when {
+            raw <= 0L -> 0.0
+            raw >= 100_000L -> raw / 1_000_000.0
+            raw >= 100L -> raw / 1000.0
             else -> raw.toDouble()
         }
+        return if (volt in 2.5..6.0) volt else 0.0
+    }
+
+    private fun resolveVoltage(rawIntent: Long, levelPercent: Int): Double {
+        val fromIntent = normalizeVoltage(rawIntent)
+        if (fromIntent > 0.0 && rawIntent >= 100L) return fromIntent
+
+        for (path in sysfsVoltagePaths) {
+            val fromSysfs = normalizeVoltage(readSysfsFile(path)?.toLongOrNull() ?: 0L)
+            if (fromSysfs > 0.0) return fromSysfs
+        }
+
+        return 3.5 + 0.008 * levelPercent.coerceIn(0, 100)
     }
 
     private fun readSysfsFile(path: String): String? {

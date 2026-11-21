@@ -23,7 +23,9 @@ import com.antigravity.wattmeter.widget.WattmeterWidget
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -36,6 +38,8 @@ class ChargingMonitorService : Service() {
     private lateinit var notificationManager: NotificationManager
 
     private var currentSettings = UserSettings()
+    private var hasBeenPlugged = false
+    private var unplugJob: Job? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -118,9 +122,24 @@ class ChargingMonitorService : Service() {
         serviceScope.launch {
             batteryRepository.snapshotFlow.collectLatest { snapshot ->
                 latestSnapshot = snapshot
+                handlePlugState(snapshot)
                 alarmHandler.checkThresholds(snapshot, currentSettings)
                 updateNotification(snapshot, currentSettings)
                 triggerWidgetUpdate()
+            }
+        }
+    }
+
+    private fun handlePlugState(snapshot: BatterySnapshot) {
+        val plugged = snapshot.plugType.isNotEmpty() && snapshot.plugType != "Battery"
+        if (plugged) {
+            hasBeenPlugged = true
+            unplugJob?.cancel()
+            unplugJob = null
+        } else if (hasBeenPlugged && unplugJob == null) {
+            unplugJob = serviceScope.launch {
+                delay(UNPLUG_GRACE_MS)
+                stopMonitoring()
             }
         }
     }
@@ -204,6 +223,9 @@ class ChargingMonitorService : Service() {
 
     private fun stopMonitoring() {
         isRunning = false
+        unplugJob?.cancel()
+        unplugJob = null
+        notificationManager.cancel(NOTIFICATION_ID_MONITORING)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             stopForeground(STOP_FOREGROUND_REMOVE)
         } else {
@@ -220,6 +242,7 @@ class ChargingMonitorService : Service() {
 
         const val CHANNEL_ID_MONITORING = "wattmeter_monitoring"
         const val NOTIFICATION_ID_MONITORING = 1001
+        private const val UNPLUG_GRACE_MS = 3000L
 
         @Volatile
         var isRunning: Boolean = false

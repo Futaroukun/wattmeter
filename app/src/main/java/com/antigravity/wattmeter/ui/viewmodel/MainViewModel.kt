@@ -17,6 +17,7 @@ import com.antigravity.wattmeter.data.model.ThemeMode
 import com.antigravity.wattmeter.data.model.UnitMultiplier
 import com.antigravity.wattmeter.data.model.UserSettings
 import com.antigravity.wattmeter.data.repository.BatteryRepository
+import com.antigravity.wattmeter.service.ChargingMonitorService
 import com.antigravity.wattmeter.util.CsvExporter
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -80,6 +81,10 @@ class MainViewModel(
     private val _isServiceRunning = MutableStateFlow(false)
     val isServiceRunning: StateFlow<Boolean> = _isServiceRunning.asStateFlow()
 
+    fun syncServiceState() {
+        _isServiceRunning.value = ChargingMonitorService.isRunning
+    }
+
     private val maxBufferPoints = 120
     private var sessionStartTime = 0L
     private var wattSum = 0.0
@@ -89,6 +94,7 @@ class MainViewModel(
     init {
         viewModelScope.launch {
             repository.snapshotFlow.collect { snap ->
+                syncServiceState()
                 val watt = snap.watt
                 val current = snap.currentNowMa
                 val temp = snap.temperatureCelsius.toDouble()
@@ -104,7 +110,7 @@ class MainViewModel(
                         lastSampleTime = now
                         _sessionPeakWatt.value = watt
                         _sessionMinWatt.value = watt
-                        _sessionPeakCurrentMa.value = current
+                        _sessionPeakCurrentMa.value = kotlin.math.abs(current)
                         _sessionMaxTemp.value = snap.temperatureCelsius
                         wattSum = watt
                         wattSampleCount = 1
@@ -118,7 +124,7 @@ class MainViewModel(
                         if (watt > 0.1) {
                             _sessionMinWatt.value = if (_sessionMinWatt.value <= 0.1) watt else min(_sessionMinWatt.value, watt)
                         }
-                        _sessionPeakCurrentMa.value = max(_sessionPeakCurrentMa.value, current)
+                        _sessionPeakCurrentMa.value = max(_sessionPeakCurrentMa.value, kotlin.math.abs(current))
                         _sessionMaxTemp.value = max(_sessionMaxTemp.value, snap.temperatureCelsius)
                         wattSum += watt
                         wattSampleCount++
@@ -244,27 +250,19 @@ class MainViewModel(
     }
 
     fun toggleMonitoringService(context: Context) {
-        val serviceClass = try {
-            Class.forName("com.antigravity.wattmeter.service.ChargingMonitorService")
-        } catch (e: ClassNotFoundException) {
-            null
-        }
-
-        if (serviceClass != null) {
-            val intent = Intent(context, serviceClass)
-            if (_isServiceRunning.value) {
-                intent.action = "com.antigravity.wattmeter.action.STOP"
-                context.startService(intent)
-                _isServiceRunning.value = false
+        val intent = Intent(context, ChargingMonitorService::class.java)
+        if (ChargingMonitorService.isRunning) {
+            intent.action = ChargingMonitorService.ACTION_STOP
+            context.startService(intent)
+            _isServiceRunning.value = false
+        } else {
+            intent.action = ChargingMonitorService.ACTION_START
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(intent)
             } else {
-                intent.action = "com.antigravity.wattmeter.action.START"
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    context.startForegroundService(intent)
-                } else {
-                    context.startService(intent)
-                }
-                _isServiceRunning.value = true
+                context.startService(intent)
             }
+            _isServiceRunning.value = true
         }
     }
 

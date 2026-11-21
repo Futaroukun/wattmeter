@@ -79,10 +79,10 @@ fun DashboardScreen(
         "--"
     }
 
-    val etaText = if (snapshot.isCharging && snapshot.levelPercent < 100 && snapshot.currentNowMa > 50.0) {
+    val etaText = if (snapshot.isCharging && snapshot.levelPercent < 100 && kotlin.math.abs(snapshot.currentNowMa) > 50.0) {
         val capacity = if (snapshot.capacityDesignMah > 0) snapshot.capacityDesignMah else 4500
         val remainingMah = capacity * (100 - snapshot.levelPercent) / 100.0
-        val hoursRemaining = remainingMah / snapshot.currentNowMa
+        val hoursRemaining = remainingMah / kotlin.math.abs(snapshot.currentNowMa)
         val totalMinutes = (hoursRemaining * 60).toInt().coerceIn(1, 1440)
         val h = totalMinutes / 60
         val m = totalMinutes % 60
