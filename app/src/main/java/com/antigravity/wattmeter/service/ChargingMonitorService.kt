@@ -92,7 +92,7 @@ class ChargingMonitorService : Service() {
         val pref = app.preferencesManager
 
         dataCollectionJob = serviceScope.launch {
-            combine(repo.batterySnapshot, pref.userSettingsFlow) { snapshot, settings ->
+            combine(repo.snapshotFlow, pref.userSettingsFlow) { snapshot, settings ->
                 Pair(snapshot, settings)
             }.collect { (snapshot, settings) ->
                 handleSnapshotUpdate(snapshot, settings)
@@ -106,7 +106,7 @@ class ChargingMonitorService : Service() {
                 if (unplugJob == null) {
                     unplugJob = serviceScope.launch {
                         delay(UNPLUG_GRACE_MS)
-                        val latest = (application as WattmeterApp).batteryRepository.batterySnapshot.first()
+                        val latest = (application as WattmeterApp).batteryRepository.snapshotFlow.first()
                         if (!latest.isCharging) {
                             stopMonitoring()
                         }

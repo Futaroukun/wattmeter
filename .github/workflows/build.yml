@@ -43,34 +43,13 @@ jobs:
           echo "KEYSTORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
 
       - name: Run Unit Tests
-        run: |
-          ./gradlew testDebugUnitTest --no-daemon 2>&1 | tee test_output.log || {
-            echo "## Unit Test Failure Log" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            tail -n 80 test_output.log >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            exit 1
-          }
+        run: ./gradlew testDebugUnitTest --no-daemon
 
       - name: Build Debug APK
-        run: |
-          ./gradlew assembleDebug --no-daemon 2>&1 | tee debug_build.log || {
-            echo "## Debug Build Failure Log" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            tail -n 80 debug_build.log >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            exit 1
-          }
+        run: ./gradlew assembleDebug --no-daemon
 
       - name: Build Release APK
-        run: |
-          ./gradlew assembleRelease --no-daemon 2>&1 | tee release_build.log || {
-            echo "## Release Build Failure Log" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            tail -n 80 release_build.log >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            exit 1
-          }
+        run: ./gradlew assembleRelease --no-daemon
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
