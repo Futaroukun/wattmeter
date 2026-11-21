@@ -8,9 +8,7 @@ plugins {
 fun secret(name: String): String? = System.getenv(name)?.takeIf { it.isNotBlank() }
     ?: (project.findProperty(name) as String?)?.takeIf { it.isNotBlank() }
 
-val customKeystore = secret("KEYSTORE_FILE")?.let { file(it) }?.takeIf { it.exists() }
-val defaultKeystore = file("keystore/release.jks").takeIf { it.exists() }
-val releaseKeystoreFile = customKeystore ?: defaultKeystore
+val keystorePath = secret("KEYSTORE_FILE") ?: "keystore/release.jks"
 
 android {
     namespace = "com.antigravity.wattmeter"
@@ -27,23 +25,17 @@ android {
     }
 
     signingConfigs {
-        if (releaseKeystoreFile != null) {
-            create("release") {
-                storeFile = releaseKeystoreFile
-                storePassword = secret("KEYSTORE_PASSWORD") ?: "wattmeter123"
-                keyAlias = secret("KEY_ALIAS") ?: "wattmeter"
-                keyPassword = secret("KEY_PASSWORD") ?: "wattmeter123"
-            }
+        create("release") {
+            storeFile = file(keystorePath)
+            storePassword = secret("KEYSTORE_PASSWORD") ?: "wattmeter123"
+            keyAlias = secret("KEY_ALIAS") ?: "wattmeter"
+            keyPassword = secret("KEY_PASSWORD") ?: "wattmeter123"
         }
     }
 
     buildTypes {
         debug {
-            signingConfig = if (releaseKeystoreFile != null) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
-            }
+            signingConfig = signingConfigs.getByName("release")
         }
         release {
             isMinifyEnabled = true
@@ -52,11 +44,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = if (releaseKeystoreFile != null) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
-            }
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 
