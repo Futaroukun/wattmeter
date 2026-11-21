@@ -15,6 +15,7 @@ import androidx.core.content.ContextCompat
 import com.antigravity.wattmeter.ui.navigation.AppNavigation
 import com.antigravity.wattmeter.ui.theme.WattmeterTheme
 import com.antigravity.wattmeter.ui.viewmodel.MainViewModel
+import rikka.shizuku.Shizuku
 
 class MainActivity : ComponentActivity() {
 
@@ -26,10 +27,21 @@ class MainActivity : ComponentActivity() {
         ActivityResultContracts.RequestPermission()
     ) {}
 
+    private val shizukuPermissionListener = Shizuku.OnRequestPermissionResultListener { _, grantResult ->
+        if (grantResult == PackageManager.PERMISSION_GRANTED) {
+            viewModel.refreshBatteryData()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         requestNotificationPermission()
+
+        try {
+            Shizuku.addRequestPermissionResultListener(shizukuPermissionListener)
+        } catch (e: Exception) {
+        }
 
         setContent {
             val userSettings by viewModel.userSettings.collectAsState()
@@ -40,6 +52,14 @@ class MainActivity : ComponentActivity() {
             ) {
                 AppNavigation(viewModel = viewModel)
             }
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        try {
+            Shizuku.removeRequestPermissionResultListener(shizukuPermissionListener)
+        } catch (e: Exception) {
         }
     }
 
