@@ -8,17 +8,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,8 +32,7 @@ import java.util.Locale
 @Composable
 fun BatteryInfoScreen(
     viewModel: MainViewModel,
-    modifier: Modifier = Modifier,
-    onNavigateToSettings: () -> Unit = {}
+    modifier: Modifier = Modifier
 ) {
     val snapshot by viewModel.snapshot.collectAsState()
     val diagnostic by viewModel.diagnostic.collectAsState()
@@ -54,35 +48,16 @@ fun BatteryInfoScreen(
             .verticalScroll(scrollState)
             .padding(16.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f, fill = false)) {
-                Text(
-                    text = "Battery Information",
-                    style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Text(
-                    text = "Hardware specifications and internal battery telemetry",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline
-                )
-            }
-
-            IconButton(
-                onClick = onNavigateToSettings,
-                modifier = Modifier.size(36.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = "Settings",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
+        Text(
+            text = "Battery Information",
+            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Text(
+            text = "Hardware specifications and internal battery telemetry",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.outline
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 

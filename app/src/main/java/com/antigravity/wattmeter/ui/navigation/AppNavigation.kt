@@ -46,11 +46,12 @@ fun AppNavigation(
     modifier: Modifier = Modifier
 ) {
     val navController = rememberNavController()
-    val navItems = listOf(
+    val items = listOf(
         Screen.Dashboard,
         Screen.Graph,
         Screen.History,
-        Screen.BatteryInfo
+        Screen.BatteryInfo,
+        Screen.Settings
     )
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -63,7 +64,7 @@ fun AppNavigation(
                 containerColor = MaterialTheme.colorScheme.surfaceContainer,
                 contentColor = MaterialTheme.colorScheme.onSurface
             ) {
-                navItems.forEach { screen ->
+                items.forEach { screen ->
                     val selected = currentRoute == screen.route
                     NavigationBarItem(
                         icon = { Icon(imageVector = screen.icon, contentDescription = screen.title) },
@@ -105,34 +106,19 @@ fun AppNavigation(
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Screen.Dashboard.route) {
-                DashboardScreen(
-                    viewModel = viewModel,
-                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
-                )
+                DashboardScreen(viewModel = viewModel)
             }
             composable(Screen.Graph.route) {
-                GraphScreen(
-                    viewModel = viewModel,
-                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
-                )
+                GraphScreen(viewModel = viewModel)
             }
             composable(Screen.History.route) {
-                HistoryScreen(
-                    viewModel = viewModel,
-                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
-                )
+                HistoryScreen(viewModel = viewModel)
             }
             composable(Screen.BatteryInfo.route) {
-                BatteryInfoScreen(
-                    viewModel = viewModel,
-                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
-                )
+                BatteryInfoScreen(viewModel = viewModel)
             }
             composable(Screen.Settings.route) {
-                SettingsScreen(
-                    viewModel = viewModel,
-                    onNavigateBack = { navController.popBackStack() }
-                )
+                SettingsScreen(viewModel = viewModel)
             }
         }
     }
