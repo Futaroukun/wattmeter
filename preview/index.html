@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Wattmeter Web Preview & UI Design Studio</title>
+<title>Wattmeter UI Studio & Live Preview</title>
 <style>
 :root {
   --primary: #00E5FF;
@@ -81,13 +81,19 @@ body {
 header.studio-bar {
   background: #141a23;
   border-bottom: 1px solid #232c3b;
-  padding: 10px 18px;
+  padding: 8px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
   z-index: 100;
+}
+
+.studio-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .studio-title {
@@ -100,33 +106,53 @@ header.studio-bar {
   color: var(--primary);
 }
 
-.studio-badge {
-  background: rgba(0, 229, 255, 0.15);
-  color: var(--primary);
-  padding: 2px 8px;
-  border-radius: 12px;
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(0, 230, 118, 0.15);
+  border: 1px solid rgba(0, 230, 118, 0.3);
+  color: #00E676;
   font-size: 11px;
   font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 12px;
+}
+
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #00E676;
+  box-shadow: 0 0 6px #00E676;
+  animation: pulse-dot 1.5s infinite;
+}
+
+@keyframes pulse-dot {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
 .studio-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .studio-btn {
   background: #232d3d;
   color: #e0e6ed;
   border: 1px solid #364459;
-  padding: 6px 12px;
+  padding: 5px 10px;
   border-radius: 8px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   transition: all 0.15s ease;
 }
 
@@ -152,7 +178,7 @@ header.studio-bar {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 16px;
   overflow-y: auto;
   background: radial-gradient(circle at center, #131922 0%, #090d12 100%);
 }
@@ -242,6 +268,18 @@ header.studio-bar {
   margin-bottom: 8px;
 }
 
+.app-title-group h1 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: var(--on-background);
+}
+
+.app-title-group span {
+  font-size: 11px;
+  color: var(--outline);
+}
+
 .icon-btn-header {
   width: 36px;
   height: 36px;
@@ -264,18 +302,6 @@ header.studio-bar {
   transform: scale(0.92);
 }
 
-.app-title-group h1 {
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: -0.3px;
-  color: var(--on-background);
-}
-
-.app-title-group span {
-  font-size: 11px;
-  color: var(--outline);
-}
-
 .charging-badge {
   display: inline-flex;
   align-items: center;
@@ -287,7 +313,6 @@ header.studio-bar {
   letter-spacing: 0.5px;
   background: rgba(0, 230, 118, 0.15);
   color: var(--success);
-  transition: all 0.2s ease;
 }
 
 .charging-badge.discharging {
@@ -303,84 +328,82 @@ header.studio-bar {
 }
 
 .gauge-box {
+  position: relative;
+  width: 230px;
+  height: 230px;
+  margin: 0 auto;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  position: relative;
-  margin: 6px 0;
-  height: 240px;
-}
-
-#gaugeCanvas {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
 }
 
 .gauge-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  text-align: center;
-  z-index: 10;
   pointer-events: none;
 }
 
 .gauge-state-tag {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 1.2px;
-  color: var(--primary);
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 4px;
-}
-
-.gauge-state-tag.discharging {
-  color: var(--on-surface-variant);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-bottom: 2px;
+  background: rgba(0, 229, 255, 0.15);
+  color: var(--primary);
 }
 
 .gauge-watt-number {
+  font-family: "SF Mono", "Roboto Mono", Menlo, monospace;
   font-size: 52px;
   font-weight: 900;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   line-height: 1;
   color: var(--on-background);
-  margin: 2px 0;
+  letter-spacing: -1.5px;
 }
 
 .gauge-unit {
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 2.5px;
-  color: var(--primary);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: var(--outline);
+  margin-top: 2px;
 }
 
 .gauge-avg {
   font-size: 11px;
-  font-weight: 600;
-  color: var(--on-surface-variant);
-  margin-top: 2px;
-}
-
-.gauge-scale-info {
-  font-size: 11px;
-  font-weight: 500;
   color: var(--outline);
+  font-weight: 500;
   margin-top: 4px;
 }
 
+.gauge-scale-info {
+  font-size: 10px;
+  color: var(--outline);
+  margin-top: 2px;
+}
+
 .diagnostic-banner {
-  background: rgba(255, 183, 3, 0.12);
-  border: 1px solid rgba(255, 183, 3, 0.4);
+  background: rgba(255, 183, 3, 0.1);
+  border: 1px solid rgba(255, 183, 3, 0.35);
   border-radius: var(--card-radius);
-  padding: 12px 14px;
+  padding: 10px 14px;
+  font-size: 11px;
+  color: var(--warning);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .diagnostic-banner-header {
@@ -388,14 +411,6 @@ header.studio-bar {
   align-items: center;
   justify-content: space-between;
   font-weight: 700;
-  font-size: 12px;
-  color: var(--warning);
-}
-
-.diagnostic-banner-body {
-  font-size: 11px;
-  line-height: 1.4;
-  color: var(--on-background);
 }
 
 .metric-grid {
@@ -405,38 +420,29 @@ header.studio-bar {
 }
 
 .metric-card {
-  background: var(--surface-variant);
+  background: var(--surface-container);
   border-radius: var(--card-radius);
   padding: 12px 14px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   border: 1px solid var(--outline-variant);
-  transition: transform 0.15s ease, border-color 0.15s ease;
-  position: relative;
-  overflow: hidden;
+  transition: transform 0.15s ease;
 }
 
 .metric-card-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  color: var(--outline);
   margin-bottom: 6px;
 }
 
-.metric-card-title {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.8px;
-  color: var(--outline);
-}
-
-.metric-card-icon {
-  width: 16px;
-  height: 16px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+.metric-card-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
 }
 
 .metric-card-val-row {
@@ -446,50 +452,114 @@ header.studio-bar {
 }
 
 .metric-card-val {
-  font-size: 26px;
+  font-family: "SF Mono", "Roboto Mono", Menlo, monospace;
+  font-size: 20px;
   font-weight: 800;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   color: var(--on-background);
 }
 
 .metric-card-unit {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--outline);
 }
 
-.metric-card-sub {
-  font-size: 10px;
-  color: var(--outline);
-  margin-top: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.monitor-action-btn {
-  background: var(--primary);
-  color: var(--on-primary);
+.service-btn {
+  width: 100%;
   height: var(--btn-height);
   border-radius: var(--btn-radius);
   border: none;
-  font-size: 14px;
+  background: var(--primary);
+  color: var(--on-primary);
   font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.3px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 229, 255, 0.25);
-  transition: all 0.15s ease;
-  margin: 6px auto;
-  width: 88%;
+  box-shadow: 0 4px 15px rgba(0, 229, 255, 0.25);
+  transition: all 0.2s;
+  margin-top: 4px;
 }
 
-.monitor-action-btn.running {
+.service-btn.running {
   background: var(--danger);
   color: #fff;
-  box-shadow: 0 4px 14px rgba(255, 82, 82, 0.3);
+  box-shadow: 0 4px 15px rgba(255, 82, 82, 0.25);
+}
+
+.graph-tab-row {
+  display: flex;
+  background: var(--surface-container-high);
+  border-radius: 12px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.graph-tab-btn {
+  flex: 1;
+  padding: 8px 0;
+  border: none;
+  background: transparent;
+  color: var(--outline);
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.graph-tab-btn.active {
+  background: var(--surface-container);
+  color: var(--primary);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.graph-canvas-box {
+  width: 100%;
+  height: 200px;
+  background: var(--surface-container);
+  border-radius: var(--card-radius);
+  border: 1px solid var(--outline-variant);
+  padding: 10px;
+}
+
+.settings-card {
+  background: var(--surface-container);
+  border-radius: var(--card-radius);
+  border: 1px solid var(--outline-variant);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.settings-card-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.setting-row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.setting-row-desc {
+  font-size: 11px;
+  color: var(--outline);
 }
 
 .nav-bar {
@@ -497,13 +567,14 @@ header.studio-bar {
   background: var(--surface-container);
   border-top: 1px solid var(--outline-variant);
   display: flex;
-  align-items: center;
   justify-content: space-around;
-  padding: 0 4px;
+  align-items: center;
+  padding: 0 8px;
   z-index: 40;
 }
 
 .nav-item {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -512,89 +583,62 @@ header.studio-bar {
   border: none;
   color: var(--outline);
   cursor: pointer;
-  flex: 1;
-  padding: 6px 0;
-  transition: all 0.15s ease;
+  transition: all 0.15s;
 }
 
 .nav-item-pill {
-  width: 48px;
-  height: 26px;
-  border-radius: 13px;
+  width: 52px;
+  height: 28px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: all 0.2s;
 }
 
 .nav-item.active .nav-item-pill {
-  background: var(--primary-container);
+  background: var(--surface-container-high);
   color: var(--primary);
-}
-
-.nav-item.active {
-  color: var(--on-background);
-  font-weight: 700;
 }
 
 .nav-item-label {
   font-size: 10px;
-  letter-spacing: 0.2px;
-}
-
-.graph-canvas-box {
-  background: var(--surface-variant);
-  border-radius: var(--card-radius);
-  border: 1px solid var(--outline-variant);
-  padding: 12px;
-  height: 220px;
-  display: flex;
-  flex-direction: column;
-}
-
-.graph-tab-row {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.graph-tab-btn {
-  background: transparent;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 16px;
-  font-size: 11px;
   font-weight: 600;
-  color: var(--outline);
-  cursor: pointer;
 }
 
-.graph-tab-btn.active {
-  background: var(--primary-container);
+.nav-item.active .nav-item-label {
   color: var(--primary);
+  font-weight: 700;
 }
 
-.sidebar-panel {
+/* SIDEBAR */
+aside.sidebar-panel {
   width: 360px;
-  background: #141a23;
+  background: #10151d;
   border-left: 1px solid #232c3b;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  padding: 16px;
+  gap: 16px;
 }
 
 .panel-section {
-  padding: 16px;
-  border-bottom: 1px solid #232c3b;
+  background: #171f2b;
+  border-radius: 12px;
+  border: 1px solid #283547;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .panel-title {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.8px;
-  color: var(--primary);
-  margin-bottom: 12px;
+  letter-spacing: 0.6px;
+  color: #798da3;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -604,123 +648,202 @@ header.studio-bar {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin-bottom: 12px;
 }
 
 .control-row-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
   font-size: 12px;
-  font-weight: 600;
-  color: #adb5bd;
+  color: #a0aec0;
 }
 
-.control-row-header span.val-badge {
-  color: var(--primary);
+.val-badge {
   font-family: monospace;
-  font-size: 12px;
   font-weight: 700;
+  color: var(--primary);
 }
 
 input[type="range"] {
   width: 100%;
   accent-color: var(--primary);
-  cursor: pointer;
-}
-
-.btn-group-2 {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
+  height: 4px;
 }
 
 .btn-group-4 {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.btn-group-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 6px;
 }
 
 .toggle-chip {
-  background: #232d3d;
-  border: 1px solid #364459;
-  color: #c5d1de;
-  padding: 6px;
-  border-radius: 8px;
+  padding: 6px 4px;
   font-size: 11px;
   font-weight: 600;
+  background: #232d3d;
+  border: 1px solid #364459;
+  color: #c9d4e2;
+  border-radius: 6px;
   cursor: pointer;
   text-align: center;
-  transition: all 0.15s ease;
-}
-
-.toggle-chip:hover {
-  background: #2c384d;
 }
 
 .toggle-chip.active {
-  background: rgba(0, 229, 255, 0.2);
+  background: var(--primary);
+  color: #00363D;
   border-color: var(--primary);
-  color: var(--primary);
 }
 
-.specs-card {
-  background: #0d1218;
-  border: 1px solid #232c3b;
-  border-radius: 8px;
-  padding: 10px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 11px;
-  color: #8be9fd;
-  max-height: 160px;
-  overflow-y: auto;
-  white-space: pre-wrap;
+/* SYSTEM VIEW OVERLAYS (Notification, Widget, Tile, Modals) */
+.system-view-container {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
 }
 
-@media (max-width: 900px) {
-  .main-layout {
-    flex-direction: column;
-  }
-  .sidebar-panel {
-    width: 100%;
-    max-height: 400px;
-  }
+.system-view-container.active {
+  display: flex;
+}
+
+.notif-card {
+  background: #222730;
+  border-radius: 18px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid #353f50;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+
+.notif-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #8b9bb4;
+}
+
+.notif-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.notif-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.notif-sub {
+  font-size: 12px;
+  color: #00E5FF;
+  font-weight: 600;
+}
+
+.notif-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.widget-2x1 {
+  background: #181f2a;
+  border-radius: 20px;
+  padding: 14px;
+  border: 1px solid #2d3b4e;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+}
+
+.widget-4x2 {
+  background: #181f2a;
+  border-radius: 24px;
+  padding: 16px;
+  border: 1px solid #2d3b4e;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+}
+
+.qs-tile-box {
+  width: 100px;
+  height: 90px;
+  border-radius: 20px;
+  background: var(--surface-container-high);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  border: 1px solid var(--outline-variant);
+  transition: all 0.2s;
+}
+
+.qs-tile-box.active {
+  background: var(--primary);
+  color: #00363D;
+  border-color: var(--primary);
+}
+
+.modal-dialog-preview {
+  background: var(--surface-container-high);
+  border-radius: 22px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid var(--outline-variant);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.7);
 }
 </style>
 </head>
 <body>
 
 <header class="studio-bar">
-  <div class="studio-title">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M11 21h-1l1-7H7.5c-.88 0-.33-.75-.31-.78C8.48 10.94 10.42 7.54 13.01 3h1l-1 7h3.51c.4 0 .62.19.4.66l-5.92 10.34z"/></svg>
-    <span>Wattmeter UI Studio</span>
-    <span class="studio-badge">Compose Web Replica</span>
+  <div class="studio-title-group">
+    <div class="studio-title">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M11 21h-1l1-7H7.5c-.88 0-.33-.75-.31-.78C8.48 10.94 10.42 7.54 13.01 3h1l-1 7h3.51c.4 0 .62.19.4.66l-5.92 10.34z"/></svg>
+      <span>Wattmeter Studio</span>
+    </div>
+    <div class="live-badge" title="Auto-reload aktif secara instan setiap ada perubahan">
+      <span class="live-dot"></span>
+      <span>Live Sync Active</span>
+    </div>
   </div>
 
   <div class="studio-actions">
-    <button class="studio-btn active" id="btnModePhone" onclick="toggleDeviceMode(false)">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/></svg>
-      Frame HP
-    </button>
-    <button class="studio-btn" id="btnModeFull" onclick="toggleDeviceMode(true)">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
-      Layar Penuh
-    </button>
-    <button class="studio-btn" onclick="copyComposeTokens()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
-      Salin Nilai Token
-    </button>
+    <button class="studio-btn active" id="btnModeApp" onclick="switchStudioView('phone', this)">📱 HP Mockup</button>
+    <button class="studio-btn" id="btnModeNotif" onclick="switchStudioView('system', this)">🔔 Notif & Widget</button>
+    <button class="studio-btn" id="btnDarkTheme" onclick="applyTheme('dark')">Dark</button>
+    <button class="studio-btn" id="btnOledTheme" onclick="applyTheme('oled')">OLED</button>
+    <button class="studio-btn" id="btnLightTheme" onclick="applyTheme('light')">Light</button>
+    <button class="studio-btn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
   </div>
 </header>
 
 <div class="main-layout">
+  <!-- PREVIEW AREA -->
+  <main class="preview-area">
 
-  <div class="preview-area">
-    <div class="device-frame" id="deviceFrame">
+    <!-- 1. PHONE SCREEN MOCKUP -->
+    <div class="device-frame" id="phoneDevice">
       <div class="device-notch"></div>
-      
+
+      <!-- STATUS BAR -->
       <div class="status-bar">
-        <span id="clockDisplay">17:45</span>
+        <span id="clockDisplay">18:00</span>
         <div style="display:flex; gap:6px; align-items:center;">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 18.25C5.9 20 8.81 21 12 21s6.1-1 7.65-2.75l-.62-.64C20.26 16.07 21 14.12 21 12c0-4.97-4.03-9-9-9z"/></svg>
           <span id="statusBarPercent">85%</span>
@@ -730,12 +853,12 @@ input[type="range"] {
 
       <div class="screen-container">
 
-        <!-- TAB 1: DASHBOARD -->
+        <!-- TAB 0: DASHBOARD -->
         <div class="screen-tab-content active" id="tab-dashboard">
           <div class="top-bar-row">
             <div class="app-title-group">
               <h1>Wattmeter</h1>
-              <span id="powerSourceLabel">Power Source: AC</span>
+              <span id="powerSourceLabel">Power Source: AC Fast Charging</span>
             </div>
             <div style="display:flex; align-items:center; gap:8px;">
               <div class="charging-badge" id="chargingStateBadge">
@@ -765,104 +888,84 @@ input[type="range"] {
           <div class="diagnostic-banner" id="diagnosticBanner" style="display:none;">
             <div class="diagnostic-banner-header">
               <span>DIAGNOSTIK ARUS 0 mA</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+              <button class="studio-btn" style="padding:2px 8px; font-size:10px;" onclick="toggleInvertSign()">Invert Sign</button>
             </div>
-            <div class="diagnostic-banner-body" id="diagnosticText">
-              Sensor arus melaporkan 0 mA. Driver CURRENT_NOW dibatasi kernel. Mode Estimasi Cerdas aktif.
-            </div>
+            <span>Arus kernel bernilai 0 mA. Estimasi cerdas aktif secara otomatis.</span>
           </div>
 
           <div class="metric-grid">
             <div class="metric-card">
               <div class="metric-card-top">
-                <span class="metric-card-title">CURRENT</span>
-                <span class="metric-card-icon" style="color:var(--primary);">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M11 21h-1l1-7H7.5c-.88 0-.33-.75-.31-.78C8.48 10.94 10.42 7.54 13.01 3h1l-1 7h3.51c.4 0 .62.19.4.66l-5.92 10.34z"/></svg>
-                </span>
+                <span class="metric-card-label">Current</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M11 21h-1l1-7H7.5c-.88 0-.33-.75-.31-.78C8.48 10.94 10.42 7.54 13.01 3h1l-1 7h3.51c.4 0 .62.19.4.66l-5.92 10.34z"/></svg>
               </div>
               <div class="metric-card-val-row">
-                <span class="metric-card-val" id="metricCurrentVal">1837</span>
+                <span class="metric-card-val" id="dispCurrent">2450</span>
                 <span class="metric-card-unit">mA</span>
               </div>
-              <span class="metric-card-sub" id="metricCurrentSub">Charging flow</span>
             </div>
 
             <div class="metric-card">
               <div class="metric-card-top">
-                <span class="metric-card-title">VOLTAGE</span>
-                <span class="metric-card-icon" style="color:var(--secondary);">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg>
-                </span>
+                <span class="metric-card-label">Voltage</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg>
               </div>
               <div class="metric-card-val-row">
-                <span class="metric-card-val" id="metricVoltageVal">4.20</span>
+                <span class="metric-card-val" id="dispVoltage">4.20</span>
                 <span class="metric-card-unit">V</span>
               </div>
-              <span class="metric-card-sub" id="metricVoltageSub">Cell potential</span>
             </div>
 
             <div class="metric-card">
               <div class="metric-card-top">
-                <span class="metric-card-title">TEMPERATURE</span>
-                <span class="metric-card-icon" id="metricTempIcon" style="color:var(--success);">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M15 13V5c0-1.66-1.34-3-3-3S9 3.34 9 5v8c-1.21.91-2 2.37-2 4 0 2.76 2.24 5 5 5s5-2.24 5-5c0-1.63-.79-3.09-2-4zm-4-8c0-.55.45-1 1-1s1 .45 1 1h-1v1h1v2h-1v1h1v2h-2V5z"/></svg>
-                </span>
+                <span class="metric-card-label">Temperature</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M15 13V5c0-1.66-1.34-3-3-3S9 3.34 9 5v8c-1.21.91-2 2.37-2 4 0 2.76 2.24 5 5 5s5-2.24 5-5c0-1.63-.79-3.09-2-4zm-4-2V5c0-.55.45-1 1-1s1 .45 1 1v1h-1v1h1v2h-1v1h1v1h-2z"/></svg>
               </div>
               <div class="metric-card-val-row">
-                <span class="metric-card-val" id="metricTempVal">34.2</span>
+                <span class="metric-card-val" id="dispTemp" style="color:var(--success);">34.2</span>
                 <span class="metric-card-unit">°C</span>
               </div>
-              <span class="metric-card-sub" id="metricTempSub">Normal range</span>
             </div>
 
             <div class="metric-card">
               <div class="metric-card-top">
-                <span class="metric-card-title">BATTERY LEVEL</span>
-                <span class="metric-card-icon" style="color:var(--success);">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
-                </span>
+                <span class="metric-card-label">Battery Level</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
               </div>
               <div class="metric-card-val-row">
-                <span class="metric-card-val" id="metricLevelVal">85</span>
+                <span class="metric-card-val" id="dispLevel">85</span>
                 <span class="metric-card-unit">%</span>
               </div>
-              <span class="metric-card-sub" id="metricLevelSub">Health: Good</span>
             </div>
 
             <div class="metric-card">
               <div class="metric-card-top">
-                <span class="metric-card-title">DURATION</span>
-                <span class="metric-card-icon" style="color:var(--tertiary);">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
-                </span>
+                <span class="metric-card-label">Duration</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
               </div>
               <div class="metric-card-val-row">
-                <span class="metric-card-val" id="metricDurationVal" style="font-size:20px;">24m 12s</span>
+                <span class="metric-card-val" id="dispDuration">14m 32s</span>
               </div>
-              <span class="metric-card-sub">Charging session</span>
             </div>
 
             <div class="metric-card">
               <div class="metric-card-top">
-                <span class="metric-card-title">ESTIMATED FULL</span>
-                <span class="metric-card-icon" style="color:var(--warning);">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-3.5l-1-1zM18 7H6v12c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7z"/></svg>
-                </span>
+                <span class="metric-card-label">Est. Full</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16.01 7L16 3h-2v4h-4V3H8v4h-.01C6.89 7 6 7.89 6 8.99v12.01C6 22.1 6.89 23 7.99 23h8.01c1.11 0 2.01-.9 2.01-2.01V8.99c0-1.1-.9-1.99-2-1.99zM15 15h-2v4h-2v-4H9l3-6 3 6z"/></svg>
               </div>
               <div class="metric-card-val-row">
-                <span class="metric-card-val" id="metricEtaVal" style="font-size:22px;">28 min</span>
+                <span class="metric-card-val" id="dispEta">~42m</span>
               </div>
-              <span class="metric-card-sub">Target 100%</span>
             </div>
           </div>
 
-          <button class="monitor-action-btn" id="btnToggleMonitor" onclick="toggleMonitorService()">
+          <button class="service-btn" id="btnForegroundService" onclick="toggleForegroundService()">
             <svg id="monitorIcon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
             <span id="monitorText">Start Foreground Monitor</span>
           </button>
         </div>
 
-        <!-- TAB 2: GRAPH -->
+        <!-- TAB 1: GRAPH -->
         <div class="screen-tab-content" id="tab-graph">
           <div class="top-bar-row">
             <div class="app-title-group">
@@ -886,37 +989,25 @@ input[type="range"] {
 
           <div class="metric-grid">
             <div class="metric-card">
-              <span class="metric-card-title">PEAK WATT</span>
-              <div class="metric-card-val-row">
-                <span class="metric-card-val" id="statPeakWatt">31.4</span>
-                <span class="metric-card-unit">W</span>
-              </div>
+              <div class="metric-card-top"><span class="metric-card-label">Peak Power</span></div>
+              <div class="metric-card-val-row"><span class="metric-card-val" id="statPeakWatt">32.8</span><span class="metric-card-unit">W</span></div>
             </div>
             <div class="metric-card">
-              <span class="metric-card-title">AVG WATT</span>
-              <div class="metric-card-val-row">
-                <span class="metric-card-val" id="statAvgWatt">24.2</span>
-                <span class="metric-card-unit">W</span>
-              </div>
+              <div class="metric-card-top"><span class="metric-card-label">Average Power</span></div>
+              <div class="metric-card-val-row"><span class="metric-card-val" id="statAvgWatt">24.1</span><span class="metric-card-unit">W</span></div>
             </div>
             <div class="metric-card">
-              <span class="metric-card-title">ENERGY</span>
-              <div class="metric-card-val-row">
-                <span class="metric-card-val" id="statEnergy">9.8</span>
-                <span class="metric-card-unit">Wh</span>
-              </div>
+              <div class="metric-card-top"><span class="metric-card-label">Energy Delivered</span></div>
+              <div class="metric-card-val-row"><span class="metric-card-val" id="statEnergy">14.6</span><span class="metric-card-unit">Wh</span></div>
             </div>
             <div class="metric-card">
-              <span class="metric-card-title">PEAK CURRENT</span>
-              <div class="metric-card-val-row">
-                <span class="metric-card-val" id="statPeakCurrent">2450</span>
-                <span class="metric-card-unit">mA</span>
-              </div>
+              <div class="metric-card-top"><span class="metric-card-label">Peak Current</span></div>
+              <div class="metric-card-val-row"><span class="metric-card-val" id="statPeakCurrent">2450</span><span class="metric-card-unit">mA</span></div>
             </div>
           </div>
         </div>
 
-        <!-- TAB 3: HISTORY -->
+        <!-- TAB 2: HISTORY -->
         <div class="screen-tab-content" id="tab-history">
           <div class="top-bar-row">
             <div class="app-title-group">
@@ -924,7 +1015,7 @@ input[type="range"] {
               <span>Recorded charging sessions</span>
             </div>
             <div style="display:flex; align-items:center; gap:8px;">
-              <button class="studio-btn" style="padding:4px 8px; font-size:11px;">CSV</button>
+              <button class="studio-btn" style="padding:4px 8px; font-size:11px;" onclick="showExportToast()">CSV</button>
               <button class="icon-btn-header" onclick="openSettingsScreen()" title="Pengaturan">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
               </button>
@@ -960,7 +1051,7 @@ input[type="range"] {
           </div>
         </div>
 
-        <!-- TAB 4: BATTERY INFO -->
+        <!-- TAB 3: BATTERY INFO -->
         <div class="screen-tab-content" id="tab-battery">
           <div class="top-bar-row">
             <div class="app-title-group">
@@ -996,7 +1087,7 @@ input[type="range"] {
           </div>
         </div>
 
-        <!-- TAB 5: SETTINGS -->
+        <!-- TAB 4: SETTINGS (Full implementation) -->
         <div class="screen-tab-content" id="tab-settings">
           <div class="top-bar-row">
             <div style="display:flex; align-items:center; gap:8px;">
@@ -1005,35 +1096,105 @@ input[type="range"] {
               </button>
               <div class="app-title-group">
                 <h1>Pengaturan</h1>
-                <span>Konfigurasi aplikasi dan hardware</span>
+                <span>Konfigurasi telemetri & preferensi</span>
               </div>
             </div>
           </div>
 
-          <div class="metric-card" style="display:flex; flex-direction:column; gap:12px;">
-            <div style="font-size:11px; font-weight:700; color:var(--primary); text-transform:uppercase;">Tema Tampilan</div>
+          <!-- Section 1: Appearance -->
+          <div class="settings-card">
+            <div class="settings-card-title">Tampilan & Tema</div>
             <div class="btn-group-4">
               <button class="toggle-chip" onclick="applyTheme('system')">System</button>
               <button class="toggle-chip" onclick="applyTheme('light')">Light</button>
               <button class="toggle-chip active" id="chipDark" onclick="applyTheme('dark')">Dark</button>
               <button class="toggle-chip" id="chipOled" onclick="applyTheme('oled')">OLED</button>
             </div>
+          </div>
 
-            <div style="font-size:11px; font-weight:700; color:var(--primary); text-transform:uppercase; margin-top:6px;">Hardware & Mult</div>
-            <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px;">
-              <span>Invert Sign (- arus jadi +)</span>
+          <!-- Section 2: Sampling & Calibration -->
+          <div class="settings-card">
+            <div class="settings-card-title">Sampling & Kalibrasi</div>
+            <div class="control-row">
+              <div class="control-row-header">
+                <span>Polling Interval</span>
+                <span class="val-badge" id="lblPolling">1000 ms</span>
+              </div>
+              <div class="btn-group-4">
+                <button class="toggle-chip" onclick="setSettingVal('polling', '500')">500ms</button>
+                <button class="toggle-chip active" onclick="setSettingVal('polling', '1000')">1000ms</button>
+                <button class="toggle-chip" onclick="setSettingVal('polling', '2000')">2000ms</button>
+                <button class="toggle-chip" onclick="setSettingVal('polling', '5000')">5000ms</button>
+              </div>
+            </div>
+
+            <div class="setting-row">
+              <div class="setting-row-text">
+                <strong>Invert Sign</strong>
+                <span class="setting-row-desc">Balik nilai minus arus menjadi positif</span>
+              </div>
               <input type="checkbox" id="chkInvertSign" onchange="toggleInvertSign(this.checked)">
             </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px;">
-              <span>Estimasi Cerdas (OPPO/MediaTek)</span>
+
+            <div class="setting-row">
+              <div class="setting-row-text">
+                <strong>Estimasi Cerdas (OPPO/MediaTek)</strong>
+                <span class="setting-row-desc">Kalkulasi watt jika HAL sensor arus 0</span>
+              </div>
               <input type="checkbox" checked id="chkEstimate" onchange="toggleSmartEstimate(this.checked)">
             </div>
           </div>
+
+          <!-- Section 3: Notification & Background Service -->
+          <div class="settings-card">
+            <div class="settings-card-title">Notifikasi & Latar Belakang</div>
+            <div class="setting-row">
+              <div class="setting-row-text">
+                <strong>Auto-Start saat Boot</strong>
+                <span class="setting-row-desc">Otomatis aktif saat HP selesai restart</span>
+              </div>
+              <input type="checkbox" checked>
+            </div>
+            <div class="setting-row">
+              <div class="setting-row-text">
+                <strong>Auto-Start saat Colok Charger</strong>
+                <span class="setting-row-desc">Mulai memantau saat daya terhubung</span>
+              </div>
+              <input type="checkbox" checked>
+            </div>
+          </div>
+
+          <!-- Section 4: Alarms -->
+          <div class="settings-card">
+            <div class="settings-card-title">Alarm & Notifikasi Batas</div>
+            <div class="setting-row">
+              <div class="setting-row-text">
+                <strong>Alarm Baterai Penuh (100%)</strong>
+                <span class="setting-row-desc">Bunyikan alarm saat baterai selesai diisi</span>
+              </div>
+              <input type="checkbox" checked>
+            </div>
+            <div class="control-row">
+              <div class="control-row-header">
+                <span>Alarm Batas Level Baterai</span>
+                <span class="val-badge" id="lblAlarmLevel">80%</span>
+              </div>
+              <input type="range" min="50" max="95" value="80" oninput="document.getElementById('lblAlarmLevel').textContent = this.value + '%'">
+            </div>
+            <div class="control-row">
+              <div class="control-row-header">
+                <span>Alarm Suhu Berlebih</span>
+                <span class="val-badge" id="lblAlarmTemp">42.0 °C</span>
+              </div>
+              <input type="range" min="38" max="50" step="0.5" value="42" oninput="document.getElementById('lblAlarmTemp').textContent = parseFloat(this.value).toFixed(1) + ' °C'">
+            </div>
+          </div>
+
         </div>
 
       </div>
 
-      <!-- BOTTOM NAVIGATION BAR -->
+      <!-- BOTTOM NAVIGATION BAR (4 TABS) -->
       <nav class="nav-bar">
         <button class="nav-item active" onclick="switchNavTab(0, this)">
           <div class="nav-item-pill">
@@ -1061,9 +1222,133 @@ input[type="range"] {
         </button>
       </nav>
     </div>
-  </div>
 
-  <!-- SIDEBAR: LIVE SIMULATOR & DESIGN INSPECTOR -->
+    <!-- 2. SYSTEM VIEWS CONTAINER (Notification, Widgets, Tiles, Modals) -->
+    <div class="system-view-container" id="systemViews">
+
+      <!-- A. Notification Shade Preview -->
+      <div class="panel-section">
+        <div class="panel-title">
+          <span>Android Ongoing Notification Shade</span>
+          <span class="val-badge">Status Bar</span>
+        </div>
+        <div class="notif-card">
+          <div class="notif-header">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="#00E5FF"><path d="M11 21h-1l1-7H7.5c-.88 0-.33-.75-.31-.78C8.48 10.94 10.42 7.54 13.01 3h1l-1 7h3.51c.4 0 .62.19.4.66l-5.92 10.34z"/></svg>
+            <strong>Wattmeter Monitor</strong>
+            <span>• ongoing</span>
+          </div>
+          <div class="notif-body">
+            <div>
+              <div class="notif-title" id="notifWatt">24.5 W • Charging</div>
+              <div class="notif-sub" id="notifMetrics">4.20 V • 2450 mA • 34.2 °C • Level 85%</div>
+            </div>
+            <div class="charging-badge">AC Fast</div>
+          </div>
+          <div class="notif-actions">
+            <button class="studio-btn" style="padding:4px 10px; font-size:11px;" onclick="toggleForegroundService()">Stop Monitor</button>
+            <button class="studio-btn" style="padding:4px 10px; font-size:11px;" onclick="switchStudioView('phone', document.getElementById('btnModeApp'))">Open App</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- B. Home Screen Glance Widgets -->
+      <div class="panel-section">
+        <div class="panel-title">
+          <span>Home Screen Glance AppWidgets</span>
+          <span class="val-badge">Compose Glance</span>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <!-- 2x1 Compact Widget -->
+          <div>
+            <div style="font-size:11px; color:#8899a6; margin-bottom:4px;">Widget 2x1 (Compact)</div>
+            <div class="widget-2x1">
+              <div>
+                <div style="font-size:11px; color:var(--outline);">Wattmeter</div>
+                <div style="font-size:22px; font-weight:800; font-family:monospace; color:var(--primary);" id="widget2x1Watt">24.5 W</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:13px; font-weight:700;" id="widget2x1Level">85% • AC</div>
+                <div style="font-size:11px; color:var(--outline);" id="widget2x1Volt">4.20 V</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4x2 Detailed Widget -->
+          <div>
+            <div style="font-size:11px; color:#8899a6; margin-bottom:4px;">Widget 4x2 (Gauge & Detail)</div>
+            <div class="widget-4x2">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-weight:700; font-size:13px; color:var(--primary);">Wattmeter Monitor</span>
+                <span class="charging-badge" style="padding:2px 8px; font-size:10px;">CHARGING</span>
+              </div>
+              <div style="display:flex; justify-content:space-around; align-items:center;">
+                <div style="text-align:center;">
+                  <div style="font-size:28px; font-weight:900; font-family:monospace; color:var(--on-background);" id="widget4x2Watt">24.5 W</div>
+                  <div style="font-size:10px; color:var(--outline);">POWER</div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:4px; font-size:12px;">
+                  <span>Volt: <strong id="widget4x2Volt">4.20 V</strong></span>
+                  <span>Arus: <strong id="widget4x2Current">2450 mA</strong></span>
+                  <span>Suhu: <strong id="widget4x2Temp">34.2 °C</strong></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- C. Quick Settings Tile -->
+      <div class="panel-section">
+        <div class="panel-title">
+          <span>Android Quick Settings Tile</span>
+          <span class="val-badge">TileService</span>
+        </div>
+        <div style="display:flex; gap:16px;">
+          <div class="qs-tile-box active" id="qsTileActive" onclick="toggleForegroundService()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M11 21h-1l1-7H7.5c-.88 0-.33-.75-.31-.78C8.48 10.94 10.42 7.54 13.01 3h1l-1 7h3.51c.4 0 .62.19.4.66l-5.92 10.34z"/></svg>
+            <div style="font-size:11px; font-weight:700; text-align:center;" id="qsTileLabel">24.5 W</div>
+            <div style="font-size:9px; opacity:0.8;">Active</div>
+          </div>
+
+          <div class="qs-tile-box" style="cursor:default;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h12v12H6z"/></svg>
+            <div style="font-size:11px; font-weight:700; text-align:center;">Stopped</div>
+            <div style="font-size:9px; opacity:0.8;">Inactive</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- D. Modals & Dialogs Mockup -->
+      <div class="panel-section">
+        <div class="panel-title">
+          <span>Interactive Dialog & Modal Mockups</span>
+          <span class="val-badge">Compose Dialog</span>
+        </div>
+
+        <div class="modal-dialog-preview">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--warning)"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+            <strong style="font-size:14px;">Diagnostik Arus Kernel</strong>
+          </div>
+          <div style="font-size:12px; color:var(--on-surface-variant); line-height:1.4;">
+            Node: <code>/sys/class/power_supply/battery/current_now</code><br>
+            Raw Value: <code>0 µA</code><br>
+            Penyebab: Vendor HAL chipset membatasi akses kernel battery properties saat charging.
+          </div>
+          <div style="display:flex; justify-content:flex-end; gap:8px;">
+            <button class="studio-btn" style="padding:4px 10px; font-size:11px;">Tutup</button>
+            <button class="studio-btn active" style="padding:4px 10px; font-size:11px;">Aktifkan Estimasi</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- SIDEBAR: SIMULATOR & LIVE CONTROLS -->
   <aside class="sidebar-panel">
 
     <div class="panel-section">
@@ -1077,50 +1362,66 @@ input[type="range"] {
           <span>Charging Power</span>
           <span class="val-badge" id="lblSimWatt">24.5 W</span>
         </div>
-        <input type="range" min="0" max="65" step="0.5" value="24.5" id="sliderWatt" oninput="updateSimWatt(this.value)">
+        <input type="range" min="0" max="67" step="0.5" value="24.5" id="sliderWatt" oninput="updateSimWatt(this.value)">
       </div>
 
       <div class="control-row">
         <div class="control-row-header">
           <span>Current (mA)</span>
-          <span class="val-badge" id="lblSimCurrent">1837 mA</span>
+          <span class="val-badge" id="lblSimMa">2450 mA</span>
         </div>
-        <input type="range" min="-3000" max="6000" step="50" value="1837" id="sliderCurrent" oninput="updateSimCurrent(this.value)">
+        <input type="range" min="0" max="6000" step="50" value="2450" id="sliderMa" oninput="updateSimMa(this.value)">
       </div>
 
       <div class="control-row">
         <div class="control-row-header">
           <span>Voltage (V)</span>
-          <span class="val-badge" id="lblSimVoltage">4.20 V</span>
+          <span class="val-badge" id="lblSimVolt">4.20 V</span>
         </div>
-        <input type="range" min="3.2" max="4.5" step="0.02" value="4.20" id="sliderVoltage" oninput="updateSimVoltage(this.value)">
+        <input type="range" min="3.4" max="4.5" step="0.01" value="4.20" id="sliderVolt" oninput="updateSimVolt(this.value)">
       </div>
 
       <div class="control-row">
         <div class="control-row-header">
-          <span>Temperature (°C)</span>
+          <span>Temperature</span>
           <span class="val-badge" id="lblSimTemp">34.2 °C</span>
         </div>
-        <input type="range" min="20" max="55" step="0.5" value="34.2" id="sliderTemp" oninput="updateSimTemp(this.value)">
+        <input type="range" min="20" max="48" step="0.2" value="34.2" id="sliderTemp" oninput="updateSimTemp(this.value)">
       </div>
 
       <div class="control-row">
         <div class="control-row-header">
           <span>Battery Level</span>
-          <span class="val-badge" id="lblSimLevel">85 %</span>
+          <span class="val-badge" id="lblSimPercent">85%</span>
         </div>
-        <input type="range" min="1" max="100" step="1" value="85" id="sliderLevel" oninput="updateSimLevel(this.value)">
+        <input type="range" min="1" max="100" value="85" id="sliderPercent" oninput="updateSimPercent(this.value)">
       </div>
 
       <div class="control-row">
-        <div class="control-row-header"><span>Status Daya</span></div>
+        <div class="control-row-header">
+          <span>Status Pengisian</span>
+        </div>
         <div class="btn-group-2">
-          <button class="toggle-chip active" id="chipStateCharge" onclick="setChargeState(true)">⚡ Charging</button>
-          <button class="toggle-chip" id="chipStateDischarge" onclick="setChargeState(false)">Discharging</button>
+          <button class="toggle-chip active" id="chipStateCharging" onclick="setSimState(true)">CHARGING</button>
+          <button class="toggle-chip" id="chipStateDischarging" onclick="setSimState(false)">ON BATTERY</button>
+        </div>
+      </div>
+
+      <div class="control-row">
+        <div class="control-row-header">
+          <span>Gauge Max Scale</span>
+          <span class="val-badge" id="lblSimScale">33W Scale</span>
+        </div>
+        <div class="btn-group-4">
+          <button class="toggle-chip" onclick="setSimScale(20)">20W</button>
+          <button class="toggle-chip active" onclick="setSimScale(33)">33W</button>
+          <button class="toggle-chip" onclick="setSimScale(67)">67W</button>
+          <button class="toggle-chip" onclick="setSimScale(100)">100W</button>
         </div>
       </div>
     </div>
 
+    <!-- DESIGN TOKENS INSPECTOR -->
     <div class="panel-section">
       <div class="panel-title">
         <span>Design Tokens Tweaker</span>
@@ -1131,333 +1432,269 @@ input[type="range"] {
           <span>Card Radius</span>
           <span class="val-badge" id="lblRadius">16 px</span>
         </div>
-        <input type="range" min="8" max="28" step="2" value="16" oninput="tweakCardRadius(this.value)">
+        <input type="range" min="8" max="28" value="16" oninput="tweakCardRadius(this.value)">
       </div>
 
       <div class="control-row">
         <div class="control-row-header">
-          <span>Button Pill Height</span>
+          <span>Button Height</span>
           <span class="val-badge" id="lblBtnHeight">46 px</span>
         </div>
-        <input type="range" min="38" max="56" step="2" value="46" oninput="tweakBtnHeight(this.value)">
+        <input type="range" min="36" max="56" value="46" oninput="tweakBtnHeight(this.value)">
       </div>
 
-      <div class="control-row">
-        <div class="control-row-header">
-          <span>Tema UI</span>
-        </div>
-        <div class="btn-group-3" style="display:grid; grid-template-columns:repeat(3,1fr); gap:6px;">
-          <button class="toggle-chip" onclick="applyTheme('light')">Light</button>
-          <button class="toggle-chip active" id="sideDark" onclick="applyTheme('dark')">Dark</button>
-          <button class="toggle-chip" id="sideOled" onclick="applyTheme('oled')">OLED Pure</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="panel-section">
-      <div class="panel-title">
-        <span>Compose Token Output</span>
-      </div>
-      <div class="specs-card" id="composeCodeSnippet">val CardRadius = 16.dp
-val ButtonHeight = 46.dp
-val DarkOutline = Color(0xFF9E9E9E)
-val OledBackground = Color(0xFF000000)</div>
+      <button class="studio-btn" style="justify-content:center;" onclick="copyTokensSnippet()">Salin Token Compose</button>
     </div>
 
   </aside>
+</div>
 
+<!-- TOAST NOTIFICATION -->
+<div id="toastNotification" style="position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#222c3b; color:#00E5FF; padding:10px 18px; border-radius:24px; font-size:12px; font-weight:700; border:1px solid #364459; box-shadow:0 10px 25px rgba(0,0,0,0.6); display:none; z-index:999;">
+  Ekspor CSV berhasil disimpan!
 </div>
 
 <script>
+// ==========================================
+// 1. LIVE RELOAD WATCHER (No manual refresh!)
+// ==========================================
+(function initLiveReload() {
+  let lastServerStamp = null;
+  let isChecking = false;
+
+  setInterval(async () => {
+    if (isChecking) return;
+    isChecking = true;
+    try {
+      const res = await fetch(window.location.pathname + '?nocache=' + Date.now(), {
+        method: 'HEAD',
+        cache: 'no-store'
+      });
+      const stamp = res.headers.get('Last-Modified') || res.headers.get('ETag');
+      if (stamp) {
+        if (lastServerStamp && lastServerStamp !== stamp) {
+          saveSessionState();
+          window.location.reload();
+        } else {
+          lastServerStamp = stamp;
+        }
+      }
+    } catch (e) {
+      // Server might be reloading
+    } finally {
+      isChecking = false;
+    }
+  }, 1000);
+})();
+
+// ==========================================
+// 2. STATE MANAGEMENT & RESTORATION
+// ==========================================
 let state = {
   watt: 24.5,
-  avgWatt: 24.2,
-  currentMa: 1837,
-  voltageVolt: 4.20,
-  tempC: 34.2,
+  smoothedWatt: 24.2,
+  currentMa: 2450,
+  voltage: 4.20,
+  temperature: 34.2,
   level: 85,
   isCharging: true,
-  isEstimated: false,
+  scaleMax: 33,
+  theme: 'dark',
   isServiceRunning: false,
-  plugType: "AC",
-  theme: "dark",
   cardRadius: 16,
   btnHeight: 46,
-  isLiveTicker: true
+  tickerActive: true,
+  currentTab: 0,
+  previousTab: 0,
+  currentView: 'phone'
 };
 
-let historyData = {
-  power: [18.2, 21.0, 22.4, 23.5, 24.1, 24.5, 24.2, 24.8, 25.1, 24.5],
-  current: [1420, 1560, 1680, 1720, 1800, 1837, 1820, 1850, 1860, 1837],
-  temp: [32.0, 32.4, 32.8, 33.1, 33.5, 33.8, 34.0, 34.1, 34.2, 34.2]
-};
-let activeGraphTab = 0;
-
-function init() {
-  drawGauge();
-  drawChart();
-  startClock();
-  startTickerLoop();
+function saveSessionState() {
+  try {
+    sessionStorage.setItem('wattmeter_studio_state', JSON.stringify(state));
+  } catch (e) {}
 }
 
-function startClock() {
-  function updateTime() {
-    const d = new Date();
-    const hh = String(d.getHours()).padStart(2, '0');
-    const mm = String(d.getMinutes()).padStart(2, '0');
-    document.getElementById('clockDisplay').textContent = `${hh}:${mm}`;
-  }
-  updateTime();
-  setInterval(updateTime, 1000);
+function restoreSessionState() {
+  try {
+    const raw = sessionStorage.getItem('wattmeter_studio_state');
+    if (raw) {
+      const saved = JSON.parse(raw);
+      Object.assign(state, saved);
+    }
+  } catch (e) {}
 }
 
+// Restore on boot
+restoreSessionState();
+
+// ==========================================
+// 3. TELEMETRY RENDERERS (Canvas Gauge & Chart)
+// ==========================================
 function drawGauge() {
   const canvas = document.getElementById('gaugeCanvas');
+  if (!canvas) return;
   const ctx = canvas.getContext('2d');
-  const width = canvas.width;
-  const height = canvas.height;
+  const dpr = window.devicePixelRatio || 1;
+  const size = 240;
 
-  ctx.clearRect(0, 0, width, height);
+  if (canvas.width !== size * dpr) {
+    canvas.width = size * dpr;
+    canvas.height = size * dpr;
+  }
+  ctx.resetTransform();
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, size, size);
 
-  const cx = width / 2;
-  const cy = height / 2;
-  const strokeWidth = 18;
-  const radius = (width - strokeWidth * 2) / 2;
+  const cx = size / 2;
+  const cy = size / 2;
+  const radius = 95;
+  const strokeWidth = 14;
 
-  let maxWatt = 20;
-  if (state.watt > 100) maxWatt = 140;
-  else if (state.watt > 65) maxWatt = 100;
-  else if (state.watt > 33) maxWatt = 65;
-  else if (state.watt > 18) maxWatt = 33;
-  else maxWatt = 20;
+  const startAngle = 135 * (Math.PI / 180);
+  const sweepAngle = 270 * (Math.PI / 180);
+  const endAngle = startAngle + sweepAngle;
 
-  const fraction = Math.max(0, Math.min(1, state.watt / maxWatt));
-  const startAngleDeg = 140;
-  const sweepAngleDeg = 260;
+  const isOled = state.theme === 'oled';
+  const isLight = state.theme === 'light';
 
-  const toRad = deg => (deg * Math.PI) / 180;
-  const startRad = toRad(startAngleDeg);
-  const totalSweepRad = toRad(sweepAngleDeg);
-
+  // 1. Background Arc Track
   ctx.beginPath();
-  ctx.arc(cx, cy, radius, startRad, startRad + totalSweepRad, false);
+  ctx.arc(cx, cy, radius, startAngle, endAngle);
+  ctx.strokeStyle = isOled ? '#1f1f1f' : (isLight ? '#E0E0E0' : '#262626');
   ctx.lineWidth = strokeWidth;
-  ctx.strokeStyle = state.theme === 'light' ? '#E9ECEF' : '#1E1E1E';
   ctx.lineCap = 'round';
   ctx.stroke();
 
-  if (fraction > 0.005) {
-    const gradient = ctx.createLinearGradient(0, cy, width, cy);
-    gradient.addColorStop(0, '#00E5FF');
-    gradient.addColorStop(0.5, '#00B4D8');
-    gradient.addColorStop(1, '#FFB703');
+  // 2. Active Progress Arc
+  const fraction = Math.min(Math.max(state.watt / state.scaleMax, 0), 1);
+  if (fraction > 0.001) {
+    const currentProgressAngle = startAngle + (sweepAngle * fraction);
+    const grad = ctx.createConicGradient(startAngle, cx, cy);
+    grad.addColorStop(0, '#00E5FF');
+    grad.addColorStop(0.3, '#00B4D8');
+    grad.addColorStop(0.7, '#FFB703');
+    grad.addColorStop(1, '#FF5252');
 
     ctx.beginPath();
-    ctx.arc(cx, cy, radius, startRad, startRad + totalSweepRad * fraction, false);
+    ctx.arc(cx, cy, radius, startAngle, currentProgressAngle);
+    ctx.strokeStyle = grad;
     ctx.lineWidth = strokeWidth;
-    ctx.strokeStyle = gradient;
     ctx.lineCap = 'round';
     ctx.stroke();
   }
 
-  const tickCount = 10;
+  // 3. Ticks
+  const tickCount = 9;
   for (let i = 0; i <= tickCount; i++) {
-    const tickFrac = i / tickCount;
-    const tickAngle = startRad + totalSweepRad * tickFrac;
-    const outerR = radius;
-    const innerR = radius - 8;
+    const angle = startAngle + (sweepAngle * (i / tickCount));
+    const isMajor = i % 2 === 0;
+    const len = isMajor ? 8 : 4;
+    const rIn = radius - (strokeWidth / 2) - 4;
+    const rOut = rIn - len;
 
-    const x1 = cx + innerR * Math.cos(tickAngle);
-    const y1 = cy + innerR * Math.sin(tickAngle);
-    const x2 = cx + outerR * Math.cos(tickAngle);
-    const y2 = cy + outerR * Math.sin(tickAngle);
+    const x1 = cx + rIn * Math.cos(angle);
+    const y1 = cy + rIn * Math.sin(angle);
+    const x2 = cx + rOut * Math.cos(angle);
+    const y2 = cy + rOut * Math.sin(angle);
 
     ctx.beginPath();
     ctx.moveTo(x1, y1);
     ctx.lineTo(x2, y2);
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = tickFrac <= fraction ? 'rgba(255,255,255,0.85)' : 'rgba(100,100,100,0.4)';
+    ctx.strokeStyle = isMajor ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = isMajor ? 1.5 : 1;
     ctx.stroke();
   }
-
-  document.getElementById('gaugeWattDisplay').textContent = state.watt.toFixed(1);
-  document.getElementById('gaugeAvgDisplay').textContent = `Avg ${state.avgWatt.toFixed(1)} W`;
-  document.getElementById('gaugeScaleDisplay').textContent = `0 - ${maxWatt}W Scale` + (state.isEstimated ? ' • Est.' : '');
 }
+
+// History series buffer
+let chartHistory = Array.from({length: 40}, (_, i) => 20 + Math.sin(i / 3) * 6);
+let activeGraphTab = 0;
 
 function drawChart() {
   const canvas = document.getElementById('chartCanvas');
+  if (!canvas) return;
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
   const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width * dpr;
-  canvas.height = rect.height * dpr;
-  ctx.scale(dpr, dpr);
+  const w = rect.width || 300;
+  const h = rect.height || 180;
 
-  const w = rect.width;
-  const h = rect.height;
+  if (canvas.width !== w * dpr) {
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+  }
+  ctx.resetTransform();
+  ctx.scale(dpr, dpr);
   ctx.clearRect(0, 0, w, h);
 
-  const dataList = activeGraphTab === 0 ? historyData.power : (activeGraphTab === 1 ? historyData.current : historyData.temp);
-  const color = activeGraphTab === 0 ? '#00E5FF' : (activeGraphTab === 1 ? '#00B4D8' : '#FFB703');
+  const pad = { top: 15, bottom: 25, left: 35, right: 15 };
+  const plotW = w - pad.left - pad.right;
+  const plotH = h - pad.top - pad.bottom;
 
-  if (!dataList || dataList.length < 2) return;
-
-  const minVal = Math.min(...dataList) * 0.9;
-  const maxVal = Math.max(...dataList) * 1.1 || 1;
-
-  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
   ctx.lineWidth = 1;
-  for (let i = 1; i <= 3; i++) {
-    const y = (h / 4) * i;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.top + (plotH * (i / 4));
     ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(w, y);
+    ctx.moveTo(pad.left, y);
+    ctx.lineTo(w - pad.right, y);
     ctx.stroke();
   }
 
-  const stepX = w / (dataList.length - 1);
-  const getY = val => h - ((val - minVal) / (maxVal - minVal)) * (h - 20) - 10;
+  const data = chartHistory;
+  if (!data.length) return;
+
+  const minVal = Math.min(...data) * 0.9;
+  const maxVal = Math.max(...data) * 1.1 || 1;
+
+  ctx.fillStyle = '#8b9bb4';
+  ctx.font = '10px monospace';
+  ctx.fillText(maxVal.toFixed(1), 5, pad.top + 10);
+  ctx.fillText(minVal.toFixed(1), 5, h - pad.bottom);
+
+  // Line Points
+  const pts = data.map((val, i) => {
+    const x = pad.left + (plotW * (i / (data.length - 1)));
+    const y = pad.top + plotH - ((val - minVal) / (maxVal - minVal) * plotH);
+    return { x, y };
+  });
+
+  // Gradient under curve
+  const grad = ctx.createLinearGradient(0, pad.top, 0, h - pad.bottom);
+  grad.addColorStop(0, 'rgba(0, 229, 255, 0.35)');
+  grad.addColorStop(1, 'rgba(0, 229, 255, 0.0)');
 
   ctx.beginPath();
-  dataList.forEach((val, idx) => {
-    const x = idx * stepX;
-    const y = getY(val);
-    if (idx === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-  });
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 2.5;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.stroke();
-
-  ctx.lineTo(w, h);
-  ctx.lineTo(0, h);
+  ctx.moveTo(pts[0].x, h - pad.bottom);
+  pts.forEach(p => ctx.lineTo(p.x, p.y));
+  ctx.lineTo(pts[pts.length - 1].x, h - pad.bottom);
   ctx.closePath();
-  const fillGrad = ctx.createLinearGradient(0, 0, 0, h);
-  fillGrad.addColorStop(0, color.replace(')', ', 0.35)').replace('rgb', 'rgba').replace('#', 'rgba(') || 'rgba(0,229,255,0.25)');
-  fillGrad.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = fillGrad;
+  ctx.fillStyle = grad;
   ctx.fill();
-}
 
-function updateSimWatt(val) {
-  state.watt = parseFloat(val);
-  state.avgWatt = Math.max(0, state.watt * 0.98);
-  document.getElementById('lblSimWatt').textContent = `${state.watt.toFixed(1)} W`;
-  drawGauge();
-  updateChartData();
-}
-
-function updateSimCurrent(val) {
-  state.currentMa = parseInt(val);
-  document.getElementById('lblSimCurrent').textContent = `${state.currentMa} mA`;
-  document.getElementById('metricCurrentVal').textContent = Math.abs(state.currentMa);
-  state.watt = (Math.abs(state.currentMa) / 1000) * state.voltageVolt;
-  document.getElementById('sliderWatt').value = state.watt.toFixed(1);
-  document.getElementById('lblSimWatt').textContent = `${state.watt.toFixed(1)} W`;
-  drawGauge();
-}
-
-function updateSimVoltage(val) {
-  state.voltageVolt = parseFloat(val);
-  document.getElementById('lblSimVoltage').textContent = `${state.voltageVolt.toFixed(2)} V`;
-  document.getElementById('metricVoltageVal').textContent = state.voltageVolt.toFixed(2);
-  state.watt = (Math.abs(state.currentMa) / 1000) * state.voltageVolt;
-  document.getElementById('sliderWatt').value = state.watt.toFixed(1);
-  document.getElementById('lblSimWatt').textContent = `${state.watt.toFixed(1)} W`;
-  drawGauge();
-}
-
-function updateSimTemp(val) {
-  state.tempC = parseFloat(val);
-  document.getElementById('lblSimTemp').textContent = `${state.tempC.toFixed(1)} °C`;
-  document.getElementById('metricTempVal').textContent = state.tempC.toFixed(1);
-  const tempIcon = document.getElementById('metricTempIcon');
-  if (state.tempC >= 42) {
-    tempIcon.style.color = 'var(--danger)';
-    document.getElementById('metricTempSub').textContent = 'High temp alert';
-  } else if (state.tempC >= 38) {
-    tempIcon.style.color = 'var(--warning)';
-    document.getElementById('metricTempSub').textContent = 'Elevated';
-  } else {
-    tempIcon.style.color = 'var(--success)';
-    document.getElementById('metricTempSub').textContent = 'Normal range';
+  // Stroke line
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) {
+    const mx = (pts[i - 1].x + pts[i].x) / 2;
+    const my = (pts[i - 1].y + pts[i].y) / 2;
+    ctx.quadraticCurveTo(pts[i - 1].x, pts[i - 1].y, mx, my);
   }
+  ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+  ctx.strokeStyle = '#00E5FF';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
 }
 
-function updateSimLevel(val) {
-  state.level = parseInt(val);
-  document.getElementById('lblSimLevel').textContent = `${state.level} %`;
-  document.getElementById('metricLevelVal').textContent = state.level;
-  document.getElementById('statusBarPercent').textContent = `${state.level}%`;
-}
-
-function setChargeState(isCharging) {
-  state.isCharging = isCharging;
-  document.getElementById('chipStateCharge').classList.toggle('active', isCharging);
-  document.getElementById('chipStateDischarge').classList.toggle('active', !isCharging);
-
-  const badge = document.getElementById('chargingStateBadge');
-  const badgeText = document.getElementById('chargingStateText');
-  const tagText = document.getElementById('gaugeTagText');
-  const tagBox = document.getElementById('gaugeStateTag');
-  const srcLabel = document.getElementById('powerSourceLabel');
-
-  if (isCharging) {
-    badge.classList.remove('discharging');
-    badgeText.textContent = 'CHARGING';
-    tagBox.classList.remove('discharging');
-    tagText.textContent = 'CHARGING';
-    srcLabel.textContent = `Power Source: ${state.plugType}`;
-    if (state.currentMa < 0) state.currentMa = Math.abs(state.currentMa);
-  } else {
-    badge.classList.add('discharging');
-    badgeText.textContent = 'DISCHARGING';
-    tagBox.classList.add('discharging');
-    tagText.textContent = 'DISCHARGING';
-    srcLabel.textContent = 'On Battery';
-    if (state.currentMa > 0) state.currentMa = -state.currentMa;
-  }
-  document.getElementById('metricCurrentVal').textContent = Math.abs(state.currentMa);
-  drawGauge();
-}
-
-function toggleSmartEstimate(enabled) {
-  state.isEstimated = enabled;
-  document.getElementById('diagnosticBanner').style.display = (enabled && state.isCharging && state.currentMa === 0) ? 'flex' : 'none';
-  document.getElementById('metricVoltageSub').textContent = enabled ? 'Estimated' : 'Cell potential';
-  drawGauge();
-}
-
-function toggleInvertSign(checked) {
-  state.currentMa = -state.currentMa;
-  document.getElementById('lblSimCurrent').textContent = `${state.currentMa} mA`;
-}
-
-function toggleMonitorService() {
-  state.isServiceRunning = !state.isServiceRunning;
-  const btn = document.getElementById('btnToggleMonitor');
-  const txt = document.getElementById('monitorText');
-  const icon = document.getElementById('monitorIcon');
-  if (state.isServiceRunning) {
-    btn.classList.add('running');
-    txt.textContent = 'Stop Foreground Monitor';
-    icon.innerHTML = '<path d="M6 6h12v12H6z"/>';
-  } else {
-    btn.classList.remove('running');
-    txt.textContent = 'Start Foreground Monitor';
-    icon.innerHTML = '<path d="M8 5v14l11-7z"/>';
-  }
-}
-
-let currentNavTab = 0;
-let previousNavTab = 0;
-
+// ==========================================
+// 4. UI INTERACTION & NAVIGATION
+// ==========================================
 function switchNavTab(index, btn) {
-  previousNavTab = currentNavTab;
-  currentNavTab = index;
+  state.previousTab = state.currentTab;
+  state.currentTab = index;
+
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
   if (btn) {
     btn.classList.add('active');
@@ -1468,30 +1705,55 @@ function switchNavTab(index, btn) {
 
   const tabs = ['tab-dashboard', 'tab-graph', 'tab-history', 'tab-battery', 'tab-settings'];
   tabs.forEach((id, i) => {
-    document.getElementById(id).classList.toggle('active', i === index);
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('active', i === index);
   });
 
   if (index === 1) {
     setTimeout(drawChart, 60);
   }
+  saveSessionState();
 }
 
 function openSettingsScreen() {
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
   const tabs = ['tab-dashboard', 'tab-graph', 'tab-history', 'tab-battery', 'tab-settings'];
   tabs.forEach(id => {
-    document.getElementById(id).classList.toggle('active', id === 'tab-settings');
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('active', id === 'tab-settings');
   });
+  saveSessionState();
 }
 
 function closeSettingsScreen() {
+  const target = (state.previousTab >= 0 && state.previousTab <= 3) ? state.previousTab : 0;
   const navButtons = document.querySelectorAll('.nav-item');
-  const targetIndex = (previousNavTab >= 0 && previousNavTab <= 3) ? previousNavTab : 0;
-  switchNavTab(targetIndex, navButtons[targetIndex]);
+  switchNavTab(target, navButtons[target]);
 }
 
-function switchGraphTab(tabIndex, btn) {
-  activeGraphTab = tabIndex;
+function switchStudioView(mode, btn) {
+  state.currentView = mode;
+  document.querySelectorAll('.studio-actions .studio-btn').forEach(b => {
+    if (b.id === 'btnModeApp' || b.id === 'btnModeNotif') b.classList.remove('active');
+  });
+  if (btn) btn.classList.add('active');
+
+  const phone = document.getElementById('phoneDevice');
+  const system = document.getElementById('systemViews');
+
+  if (mode === 'phone') {
+    phone.style.display = 'flex';
+    system.classList.remove('active');
+    drawGauge();
+  } else {
+    phone.style.display = 'none';
+    system.classList.add('active');
+  }
+  saveSessionState();
+}
+
+function switchGraphTab(idx, btn) {
+  activeGraphTab = idx;
   document.querySelectorAll('.graph-tab-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   drawChart();
@@ -1507,101 +1769,236 @@ function applyTheme(themeName) {
     document.documentElement.removeAttribute('data-theme');
   }
 
-  document.querySelectorAll('.toggle-chip').forEach(c => {
-    if (['chipDark', 'chipOled', 'sideDark', 'sideOled'].includes(c.id)) {
-      c.classList.remove('active');
-    }
+  ['btnDarkTheme', 'btnOledTheme', 'btnLightTheme', 'chipDark', 'chipOled'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
   });
+
+  if (themeName === 'oled') {
+    document.getElementById('btnOledTheme')?.classList.add('active');
+    document.getElementById('chipOled')?.classList.add('active');
+  } else if (themeName === 'light') {
+    document.getElementById('btnLightTheme')?.classList.add('active');
+  } else {
+    document.getElementById('btnDarkTheme')?.classList.add('active');
+    document.getElementById('chipDark')?.classList.add('active');
+  }
 
   drawGauge();
   if (activeGraphTab >= 0) drawChart();
-  updateComposeSnippet();
+  saveSessionState();
+}
+
+function toggleForegroundService() {
+  state.isServiceRunning = !state.isServiceRunning;
+  const btn = document.getElementById('btnForegroundService');
+  const txt = document.getElementById('monitorText');
+  const icon = document.getElementById('monitorIcon');
+  const qsTile = document.getElementById('qsTileActive');
+
+  if (state.isServiceRunning) {
+    btn.classList.add('running');
+    txt.textContent = 'Stop Foreground Monitor';
+    icon.innerHTML = '<path d="M6 6h12v12H6z"/>';
+    qsTile?.classList.add('active');
+  } else {
+    btn.classList.remove('running');
+    txt.textContent = 'Start Foreground Monitor';
+    icon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+    qsTile?.classList.remove('active');
+  }
+  saveSessionState();
+}
+
+function toggleFullscreen() {
+  document.getElementById('phoneDevice').classList.toggle('fullscreen-mode');
+}
+
+function showExportToast() {
+  const t = document.getElementById('toastNotification');
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 2200);
+}
+
+// ==========================================
+// 5. SIMULATOR BINDINGS
+// ==========================================
+function updateSimWatt(val) {
+  state.watt = parseFloat(val);
+  state.smoothedWatt = (state.watt * 0.95) + 0.5;
+  document.getElementById('lblSimWatt').textContent = `${state.watt.toFixed(1)} W`;
+  document.getElementById('gaugeWattDisplay').textContent = state.watt.toFixed(1);
+  document.getElementById('gaugeAvgDisplay').textContent = `Avg ${state.smoothedWatt.toFixed(1)} W`;
+  document.getElementById('notifWatt').textContent = `${state.watt.toFixed(1)} W • ${state.isCharging ? 'Charging' : 'On Battery'}`;
+  document.getElementById('widget2x1Watt').textContent = `${state.watt.toFixed(1)} W`;
+  document.getElementById('widget4x2Watt').textContent = `${state.watt.toFixed(1)} W`;
+  document.getElementById('qsTileLabel').textContent = `${state.watt.toFixed(1)} W`;
+
+  chartHistory.push(state.watt);
+  if (chartHistory.length > 50) chartHistory.shift();
+
+  drawGauge();
+  drawChart();
+  saveSessionState();
+}
+
+function updateSimMa(val) {
+  state.currentMa = parseInt(val, 10);
+  document.getElementById('lblSimMa').textContent = `${state.currentMa} mA`;
+  document.getElementById('dispCurrent').textContent = state.currentMa;
+  document.getElementById('widget4x2Current').textContent = `${state.currentMa} mA`;
+  updateNotifSub();
+  saveSessionState();
+}
+
+function updateSimVolt(val) {
+  state.voltage = parseFloat(val);
+  document.getElementById('lblSimVolt').textContent = `${state.voltage.toFixed(2)} V`;
+  document.getElementById('dispVoltage').textContent = state.voltage.toFixed(2);
+  document.getElementById('widget2x1Volt').textContent = `${state.voltage.toFixed(2)} V`;
+  document.getElementById('widget4x2Volt').textContent = `${state.voltage.toFixed(2)} V`;
+  updateNotifSub();
+  saveSessionState();
+}
+
+function updateSimTemp(val) {
+  state.temperature = parseFloat(val);
+  document.getElementById('lblSimTemp').textContent = `${state.temperature.toFixed(1)} °C`;
+  const el = document.getElementById('dispTemp');
+  el.textContent = state.temperature.toFixed(1);
+  document.getElementById('widget4x2Temp').textContent = `${state.temperature.toFixed(1)} °C`;
+
+  if (state.temperature >= 42.0) {
+    el.style.color = 'var(--danger)';
+  } else if (state.temperature >= 37.0) {
+    el.style.color = 'var(--warning)';
+  } else {
+    el.style.color = 'var(--success)';
+  }
+  updateNotifSub();
+  saveSessionState();
+}
+
+function updateSimPercent(val) {
+  state.level = parseInt(val, 10);
+  document.getElementById('lblSimPercent').textContent = `${state.level}%`;
+  document.getElementById('dispLevel').textContent = state.level;
+  document.getElementById('statusBarPercent').textContent = `${state.level}%`;
+  document.getElementById('widget2x1Level').textContent = `${state.level}% • ${state.isCharging ? 'AC' : 'Bat'}`;
+  updateNotifSub();
+  saveSessionState();
+}
+
+function updateNotifSub() {
+  document.getElementById('notifMetrics').textContent = `${state.voltage.toFixed(2)} V • ${state.currentMa} mA • ${state.temperature.toFixed(1)} °C • Level ${state.level}%`;
+}
+
+function setSimState(isCharging) {
+  state.isCharging = isCharging;
+  document.getElementById('chipStateCharging').classList.toggle('active', isCharging);
+  document.getElementById('chipStateDischarging').classList.toggle('active', !isCharging);
+
+  const badge = document.getElementById('chargingStateBadge');
+  const txt = document.getElementById('chargingStateText');
+  const tag = document.getElementById('gaugeStateTag');
+  const tagTxt = document.getElementById('gaugeTagText');
+  const pwrLabel = document.getElementById('powerSourceLabel');
+
+  if (isCharging) {
+    badge.classList.remove('discharging');
+    txt.textContent = 'CHARGING';
+    tagTxt.textContent = 'CHARGING';
+    tag.style.background = 'rgba(0, 229, 255, 0.15)';
+    tag.style.color = 'var(--primary)';
+    pwrLabel.textContent = 'Power Source: AC Fast Charging';
+  } else {
+    badge.classList.add('discharging');
+    txt.textContent = 'DISCHARGING';
+    tagTxt.textContent = 'ON BATTERY';
+    tag.style.background = 'var(--surface-container-high)';
+    tag.style.color = 'var(--outline)';
+    pwrLabel.textContent = 'Power Source: Discharging';
+  }
+  drawGauge();
+  saveSessionState();
+}
+
+function setSimScale(maxW) {
+  state.scaleMax = maxW;
+  document.getElementById('lblSimScale').textContent = `${maxW}W Scale`;
+  document.getElementById('gaugeScaleDisplay').textContent = `0 - ${maxW}W Scale`;
+  document.querySelectorAll('.panel-section .btn-group-4 button').forEach(b => {
+    if (b.textContent.includes(maxW + 'W')) b.classList.add('active');
+    else if (b.textContent.endsWith('W')) b.classList.remove('active');
+  });
+  drawGauge();
+  saveSessionState();
+}
+
+function toggleLiveTicker() {
+  state.tickerActive = !state.tickerActive;
+  const btn = document.getElementById('btnLiveTicker');
+  btn.textContent = state.tickerActive ? 'Ticker: ON' : 'Ticker: OFF';
+  btn.classList.toggle('active', state.tickerActive);
 }
 
 function tweakCardRadius(val) {
   state.cardRadius = val;
   document.documentElement.style.setProperty('--card-radius', `${val}px`);
   document.getElementById('lblRadius').textContent = `${val} px`;
-  updateComposeSnippet();
 }
 
 function tweakBtnHeight(val) {
   state.btnHeight = val;
-  const radius = Math.round(val / 2);
   document.documentElement.style.setProperty('--btn-height', `${val}px`);
-  document.documentElement.style.setProperty('--btn-radius', `${radius}px`);
   document.getElementById('lblBtnHeight').textContent = `${val} px`;
-  updateComposeSnippet();
 }
 
-function toggleDeviceMode(isFullscreen) {
-  const frame = document.getElementById('deviceFrame');
-  document.getElementById('btnModePhone').classList.toggle('active', !isFullscreen);
-  document.getElementById('btnModeFull').classList.toggle('active', isFullscreen);
-  if (isFullscreen) {
-    frame.classList.add('fullscreen-mode');
-  } else {
-    frame.classList.remove('fullscreen-mode');
-  }
+function copyTokensSnippet() {
+  const code = `// Jetpack Compose Design Tokens
+val CardCornerRadius = ${state.cardRadius}.dp
+val ButtonHeight = ${state.btnHeight}.dp
+val ActiveScale = ${state.scaleMax}f`;
+  navigator.clipboard.writeText(code);
+  showExportToast();
+  document.getElementById('toastNotification').textContent = 'Token Compose disalin ke clipboard!';
 }
 
-function toggleLiveTicker() {
-  state.isLiveTicker = !state.isLiveTicker;
-  const btn = document.getElementById('btnLiveTicker');
-  btn.textContent = state.isLiveTicker ? 'Ticker: ON' : 'Ticker: OFF';
-  btn.classList.toggle('active', state.isLiveTicker);
-}
+// 6. LIVE SIMULATION TICKER
+setInterval(() => {
+  if (!state.tickerActive) return;
+  const delta = (Math.random() - 0.48) * 0.8;
+  const nextWatt = Math.max(0.5, Math.min(state.scaleMax, state.watt + delta));
+  state.watt = nextWatt;
+  state.smoothedWatt = (state.smoothedWatt * 0.9) + (nextWatt * 0.1);
 
-function startTickerLoop() {
-  setInterval(() => {
-    if (!state.isLiveTicker) return;
-    if (state.isCharging) {
-      const delta = (Math.random() - 0.48) * 0.6;
-      state.watt = Math.max(0.5, Math.min(65, state.watt + delta));
-      document.getElementById('sliderWatt').value = state.watt.toFixed(1);
-      document.getElementById('lblSimWatt').textContent = `${state.watt.toFixed(1)} W`;
-      drawGauge();
-      updateChartData();
-    }
-  }, 1200);
-}
+  document.getElementById('gaugeWattDisplay').textContent = nextWatt.toFixed(1);
+  document.getElementById('gaugeAvgDisplay').textContent = `Avg ${state.smoothedWatt.toFixed(1)} W`;
+  document.getElementById('lblSimWatt').textContent = `${nextWatt.toFixed(1)} W`;
+  document.getElementById('sliderWatt').value = nextWatt.toFixed(1);
 
-function updateChartData() {
-  historyData.power.push(parseFloat(state.watt.toFixed(1)));
-  historyData.power.shift();
-  historyData.current.push(parseInt(state.currentMa));
-  historyData.current.shift();
-  historyData.temp.push(parseFloat(state.tempC.toFixed(1)));
-  historyData.temp.shift();
-  if (document.getElementById('tab-graph').classList.contains('active')) {
+  chartHistory.push(nextWatt);
+  if (chartHistory.length > 50) chartHistory.shift();
+
+  drawGauge();
+  if (document.getElementById('tab-graph')?.classList.contains('active')) {
     drawChart();
   }
-}
+}, 1000);
 
-function updateComposeSnippet() {
-  const snippet = `// Jetpack Compose Design Tokens
-val CardCornerRadius = ${state.cardRadius}.dp
-val ActionButtonHeight = ${state.btnHeight}.dp
-val ActionButtonShape = RoundedCornerShape(${Math.round(state.btnHeight / 2)}.dp)
-
-// Theme Colors (${state.theme.toUpperCase()})
-val ActivePrimary = Color(0xFF00E5FF)
-val HighContrastOutline = Color(0xFF9E9E9E)
-val BackgroundSurface = ${state.theme === 'oled' ? 'Color(0xFF000000)' : (state.theme === 'light' ? 'Color(0xFFF8F9FA)' : 'Color(0xFF121212)')}`;
-  document.getElementById('composeCodeSnippet').textContent = snippet;
-}
-
-function copyComposeTokens() {
-  const text = document.getElementById('composeCodeSnippet').textContent;
-  navigator.clipboard.writeText(text).then(() => {
-    alert("Token Jetpack Compose berhasil disalin ke clipboard!");
-  });
-}
-
-window.addEventListener('load', init);
-window.addEventListener('resize', () => {
+// Initialize on DOM load
+window.addEventListener('DOMContentLoaded', () => {
+  applyTheme(state.theme);
+  setSimScale(state.scaleMax);
+  updateSimWatt(state.watt);
+  updateSimMa(state.currentMa);
+  updateSimVolt(state.voltage);
+  updateSimTemp(state.temperature);
+  updateSimPercent(state.level);
+  setSimState(state.isCharging);
+  switchNavTab(state.currentTab);
+  switchStudioView(state.currentView);
   drawGauge();
-  drawChart();
 });
 </script>
 </body>
