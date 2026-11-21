@@ -1,0 +1,1608 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Wattmeter Web Preview & UI Design Studio</title>
+<style>
+:root {
+  --primary: #00E5FF;
+  --primary-container: #004F58;
+  --on-primary: #00363D;
+  --secondary: #00B4D8;
+  --secondary-container: #004D61;
+  --tertiary: #9D4EDD;
+  --surface: #121212;
+  --surface-variant: #1E1E1E;
+  --surface-container: #181818;
+  --surface-container-high: #242424;
+  --background: #121212;
+  --on-background: #E6E1E5;
+  --on-surface: #E6E1E5;
+  --on-surface-variant: #D4D4D4;
+  --outline: #9E9E9E;
+  --outline-variant: #484848;
+  --success: #00E676;
+  --warning: #FFB703;
+  --danger: #FF5252;
+  --card-radius: 16px;
+  --btn-radius: 23px;
+  --btn-height: 46px;
+}
+
+[data-theme="oled"] {
+  --surface: #000000;
+  --surface-variant: #141414;
+  --surface-container: #0A0A0A;
+  --surface-container-high: #1A1A1A;
+  --background: #000000;
+  --on-background: #F0F0F0;
+  --on-surface: #F0F0F0;
+  --on-surface-variant: #D4D4D4;
+  --outline: #9E9E9E;
+  --outline-variant: #424242;
+}
+
+[data-theme="light"] {
+  --primary: #00838F;
+  --primary-container: #E0F7FA;
+  --on-primary: #FFFFFF;
+  --secondary: #0277BD;
+  --secondary-container: #E1F5FE;
+  --tertiary: #6A1B9A;
+  --surface: #FFFFFF;
+  --surface-variant: #E9ECEF;
+  --surface-container: #F1F3F5;
+  --surface-container-high: #E2E6EA;
+  --background: #F8F9FA;
+  --on-background: #191C1E;
+  --on-surface: #191C1E;
+  --on-surface-variant: #44474E;
+  --outline: #757575;
+  --outline-variant: #BDBDBD;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+body {
+  background-color: #0b0f14;
+  color: #e0e6ed;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+header.studio-bar {
+  background: #141a23;
+  border-bottom: 1px solid #232c3b;
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  z-index: 100;
+}
+
+.studio-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+  color: var(--primary);
+}
+
+.studio-badge {
+  background: rgba(0, 229, 255, 0.15);
+  color: var(--primary);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.studio-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.studio-btn {
+  background: #232d3d;
+  color: #e0e6ed;
+  border: 1px solid #364459;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.studio-btn:hover {
+  background: #2c384d;
+  border-color: var(--primary);
+}
+
+.studio-btn.active {
+  background: var(--primary);
+  color: #00363D;
+  border-color: var(--primary);
+}
+
+.main-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.preview-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+  background: radial-gradient(circle at center, #131922 0%, #090d12 100%);
+}
+
+.device-frame {
+  width: 380px;
+  height: 800px;
+  background: var(--background);
+  color: var(--on-background);
+  border-radius: 46px;
+  border: 10px solid #272d38;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.08);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+
+.device-frame.fullscreen-mode {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+}
+
+.device-notch {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90px;
+  height: 24px;
+  background: #000000;
+  border-radius: 14px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.device-notch::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #111;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+
+.status-bar {
+  height: 42px;
+  padding: 8px 22px 0 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--on-background);
+  z-index: 40;
+  user-select: none;
+}
+
+.screen-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 16px 20px 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.screen-tab-content {
+  display: none;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.screen-tab-content.active {
+  display: flex;
+}
+
+.top-bar-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.icon-btn-header {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--on-surface-variant);
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.icon-btn-header:hover {
+  background: var(--surface-container-high);
+}
+
+.icon-btn-header:active {
+  transform: scale(0.92);
+}
+
+.app-title-group h1 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: var(--on-background);
+}
+
+.app-title-group span {
+  font-size: 11px;
+  color: var(--outline);
+}
+
+.charging-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  background: rgba(0, 230, 118, 0.15);
+  color: var(--success);
+  transition: all 0.2s ease;
+}
+
+.charging-badge.discharging {
+  background: var(--surface-container-high);
+  color: var(--outline);
+}
+
+.badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.gauge-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin: 6px 0;
+  height: 240px;
+}
+
+#gaugeCanvas {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.gauge-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.gauge-state-tag {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.gauge-state-tag.discharging {
+  color: var(--on-surface-variant);
+}
+
+.gauge-watt-number {
+  font-size: 52px;
+  font-weight: 900;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  line-height: 1;
+  color: var(--on-background);
+  margin: 2px 0;
+}
+
+.gauge-unit {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  color: var(--primary);
+}
+
+.gauge-avg {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  margin-top: 2px;
+}
+
+.gauge-scale-info {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--outline);
+  margin-top: 4px;
+}
+
+.diagnostic-banner {
+  background: rgba(255, 183, 3, 0.12);
+  border: 1px solid rgba(255, 183, 3, 0.4);
+  border-radius: var(--card-radius);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.diagnostic-banner-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--warning);
+}
+
+.diagnostic-banner-body {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--on-background);
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.metric-card {
+  background: var(--surface-variant);
+  border-radius: var(--card-radius);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid var(--outline-variant);
+  transition: transform 0.15s ease, border-color 0.15s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.metric-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.metric-card-title {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: var(--outline);
+}
+
+.metric-card-icon {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.metric-card-val-row {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.metric-card-val {
+  font-size: 26px;
+  font-weight: 800;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: var(--on-background);
+}
+
+.metric-card-unit {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--outline);
+}
+
+.metric-card-sub {
+  font-size: 10px;
+  color: var(--outline);
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.monitor-action-btn {
+  background: var(--primary);
+  color: var(--on-primary);
+  height: var(--btn-height);
+  border-radius: var(--btn-radius);
+  border: none;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 229, 255, 0.25);
+  transition: all 0.15s ease;
+  margin: 6px auto;
+  width: 88%;
+}
+
+.monitor-action-btn.running {
+  background: var(--danger);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(255, 82, 82, 0.3);
+}
+
+.nav-bar {
+  height: 64px;
+  background: var(--surface-container);
+  border-top: 1px solid var(--outline-variant);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 4px;
+  z-index: 40;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: transparent;
+  border: none;
+  color: var(--outline);
+  cursor: pointer;
+  flex: 1;
+  padding: 6px 0;
+  transition: all 0.15s ease;
+}
+
+.nav-item-pill {
+  width: 48px;
+  height: 26px;
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.nav-item.active .nav-item-pill {
+  background: var(--primary-container);
+  color: var(--primary);
+}
+
+.nav-item.active {
+  color: var(--on-background);
+  font-weight: 700;
+}
+
+.nav-item-label {
+  font-size: 10px;
+  letter-spacing: 0.2px;
+}
+
+.graph-canvas-box {
+  background: var(--surface-variant);
+  border-radius: var(--card-radius);
+  border: 1px solid var(--outline-variant);
+  padding: 12px;
+  height: 220px;
+  display: flex;
+  flex-direction: column;
+}
+
+.graph-tab-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.graph-tab-btn {
+  background: transparent;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--outline);
+  cursor: pointer;
+}
+
+.graph-tab-btn.active {
+  background: var(--primary-container);
+  color: var(--primary);
+}
+
+.sidebar-panel {
+  width: 360px;
+  background: #141a23;
+  border-left: 1px solid #232c3b;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.panel-section {
+  padding: 16px;
+  border-bottom: 1px solid #232c3b;
+}
+
+.panel-title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--primary);
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.control-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.control-row-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #adb5bd;
+}
+
+.control-row-header span.val-badge {
+  color: var(--primary);
+  font-family: monospace;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.btn-group-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.btn-group-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.toggle-chip {
+  background: #232d3d;
+  border: 1px solid #364459;
+  color: #c5d1de;
+  padding: 6px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.toggle-chip:hover {
+  background: #2c384d;
+}
+
+.toggle-chip.active {
+  background: rgba(0, 229, 255, 0.2);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.specs-card {
+  background: #0d1218;
+  border: 1px solid #232c3b;
+  border-radius: 8px;
+  padding: 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  color: #8be9fd;
+  max-height: 160px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 900px) {
+  .main-layout {
+    flex-direction: column;
+  }
+  .sidebar-panel {
+    width: 100%;
+    max-height: 400px;
+  }
+}
+</style>
+</head>
+<body>
+
+<header class="studio-bar">
+  <div class="studio-title">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M11 21h-1l1-7H7.5c-.88 0-.33-.75-.31-.78C8.48 10.94 10.42 7.54 13.01 3h1l-1 7h3.51c.4 0 .62.19.4.66l-5.92 10.34z"/></svg>
+    <span>Wattmeter UI Studio</span>
+    <span class="studio-badge">Compose Web Replica</span>
+  </div>
+
+  <div class="studio-actions">
+    <button class="studio-btn active" id="btnModePhone" onclick="toggleDeviceMode(false)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/></svg>
+      Frame HP
+    </button>
+    <button class="studio-btn" id="btnModeFull" onclick="toggleDeviceMode(true)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+      Layar Penuh
+    </button>
+    <button class="studio-btn" onclick="copyComposeTokens()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+      Salin Nilai Token
+    </button>
+  </div>
+</header>
+
+<div class="main-layout">
+
+  <div class="preview-area">
+    <div class="device-frame" id="deviceFrame">
+      <div class="device-notch"></div>
+      
+      <div class="status-bar">
+        <span id="clockDisplay">17:45</span>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 18.25C5.9 20 8.81 21 12 21s6.1-1 7.65-2.75l-.62-.64C20.26 16.07 21 14.12 21 12c0-4.97-4.03-9-9-9z"/></svg>
+          <span id="statusBarPercent">85%</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+        </div>
+      </div>
+
+      <div class="screen-container">
+
+        <!-- TAB 1: DASHBOARD -->
+        <div class="screen-tab-content active" id="tab-dashboard">
+          <div class="top-bar-row">
+            <div class="app-title-group">
+              <h1>Wattmeter</h1>
+              <span id="powerSourceLabel">Power Source: AC</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div class="charging-badge" id="chargingStateBadge">
+                <span class="badge-dot"></span>
+                <span id="chargingStateText">CHARGING</span>
+              </div>
+              <button class="icon-btn-header" onclick="openSettingsScreen()" title="Pengaturan">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="gauge-box">
+            <canvas id="gaugeCanvas" width="240" height="240"></canvas>
+            <div class="gauge-overlay">
+              <div class="gauge-state-tag" id="gaugeStateTag">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M11 21h-1l1-7H7.5c-.88 0-.33-.75-.31-.78C8.48 10.94 10.42 7.54 13.01 3h1l-1 7h3.51c.4 0 .62.19.4.66l-5.92 10.34z"/></svg>
+                <span id="gaugeTagText">CHARGING</span>
+              </div>
+              <div class="gauge-watt-number" id="gaugeWattDisplay">24.5</div>
+              <div class="gauge-unit">WATTS</div>
+              <div class="gauge-avg" id="gaugeAvgDisplay">Avg 24.2 W</div>
+              <div class="gauge-scale-info" id="gaugeScaleDisplay">0 - 33W Scale</div>
+            </div>
+          </div>
+
+          <div class="diagnostic-banner" id="diagnosticBanner" style="display:none;">
+            <div class="diagnostic-banner-header">
+              <span>DIAGNOSTIK ARUS 0 mA</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+            </div>
+            <div class="diagnostic-banner-body" id="diagnosticText">
+              Sensor arus melaporkan 0 mA. Driver CURRENT_NOW dibatasi kernel. Mode Estimasi Cerdas aktif.
+            </div>
+          </div>
+
+          <div class="metric-grid">
+            <div class="metric-card">
+              <div class="metric-card-top">
+                <span class="metric-card-title">CURRENT</span>
+                <span class="metric-card-icon" style="color:var(--primary);">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M11 21h-1l1-7H7.5c-.88 0-.33-.75-.31-.78C8.48 10.94 10.42 7.54 13.01 3h1l-1 7h3.51c.4 0 .62.19.4.66l-5.92 10.34z"/></svg>
+                </span>
+              </div>
+              <div class="metric-card-val-row">
+                <span class="metric-card-val" id="metricCurrentVal">1837</span>
+                <span class="metric-card-unit">mA</span>
+              </div>
+              <span class="metric-card-sub" id="metricCurrentSub">Charging flow</span>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-card-top">
+                <span class="metric-card-title">VOLTAGE</span>
+                <span class="metric-card-icon" style="color:var(--secondary);">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg>
+                </span>
+              </div>
+              <div class="metric-card-val-row">
+                <span class="metric-card-val" id="metricVoltageVal">4.20</span>
+                <span class="metric-card-unit">V</span>
+              </div>
+              <span class="metric-card-sub" id="metricVoltageSub">Cell potential</span>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-card-top">
+                <span class="metric-card-title">TEMPERATURE</span>
+                <span class="metric-card-icon" id="metricTempIcon" style="color:var(--success);">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M15 13V5c0-1.66-1.34-3-3-3S9 3.34 9 5v8c-1.21.91-2 2.37-2 4 0 2.76 2.24 5 5 5s5-2.24 5-5c0-1.63-.79-3.09-2-4zm-4-8c0-.55.45-1 1-1s1 .45 1 1h-1v1h1v2h-1v1h1v2h-2V5z"/></svg>
+                </span>
+              </div>
+              <div class="metric-card-val-row">
+                <span class="metric-card-val" id="metricTempVal">34.2</span>
+                <span class="metric-card-unit">°C</span>
+              </div>
+              <span class="metric-card-sub" id="metricTempSub">Normal range</span>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-card-top">
+                <span class="metric-card-title">BATTERY LEVEL</span>
+                <span class="metric-card-icon" style="color:var(--success);">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+                </span>
+              </div>
+              <div class="metric-card-val-row">
+                <span class="metric-card-val" id="metricLevelVal">85</span>
+                <span class="metric-card-unit">%</span>
+              </div>
+              <span class="metric-card-sub" id="metricLevelSub">Health: Good</span>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-card-top">
+                <span class="metric-card-title">DURATION</span>
+                <span class="metric-card-icon" style="color:var(--tertiary);">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+                </span>
+              </div>
+              <div class="metric-card-val-row">
+                <span class="metric-card-val" id="metricDurationVal" style="font-size:20px;">24m 12s</span>
+              </div>
+              <span class="metric-card-sub">Charging session</span>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-card-top">
+                <span class="metric-card-title">ESTIMATED FULL</span>
+                <span class="metric-card-icon" style="color:var(--warning);">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 9v10H8V9h8m-1.5-6h-5l-1 1H5v2h14V4h-3.5l-1-1zM18 7H6v12c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7z"/></svg>
+                </span>
+              </div>
+              <div class="metric-card-val-row">
+                <span class="metric-card-val" id="metricEtaVal" style="font-size:22px;">28 min</span>
+              </div>
+              <span class="metric-card-sub">Target 100%</span>
+            </div>
+          </div>
+
+          <button class="monitor-action-btn" id="btnToggleMonitor" onclick="toggleMonitorService()">
+            <svg id="monitorIcon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            <span id="monitorText">Start Foreground Monitor</span>
+          </button>
+        </div>
+
+        <!-- TAB 2: GRAPH -->
+        <div class="screen-tab-content" id="tab-graph">
+          <div class="top-bar-row">
+            <div class="app-title-group">
+              <h1>Telemetry Graph</h1>
+              <span>Real-time moving average time series</span>
+            </div>
+            <button class="icon-btn-header" onclick="openSettingsScreen()" title="Pengaturan">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+            </button>
+          </div>
+
+          <div class="graph-tab-row">
+            <button class="graph-tab-btn active" onclick="switchGraphTab(0, this)">Power (W)</button>
+            <button class="graph-tab-btn" onclick="switchGraphTab(1, this)">Current (mA)</button>
+            <button class="graph-tab-btn" onclick="switchGraphTab(2, this)">Temp (°C)</button>
+          </div>
+
+          <div class="graph-canvas-box">
+            <canvas id="chartCanvas" style="width:100%; height:100%;"></canvas>
+          </div>
+
+          <div class="metric-grid">
+            <div class="metric-card">
+              <span class="metric-card-title">PEAK WATT</span>
+              <div class="metric-card-val-row">
+                <span class="metric-card-val" id="statPeakWatt">31.4</span>
+                <span class="metric-card-unit">W</span>
+              </div>
+            </div>
+            <div class="metric-card">
+              <span class="metric-card-title">AVG WATT</span>
+              <div class="metric-card-val-row">
+                <span class="metric-card-val" id="statAvgWatt">24.2</span>
+                <span class="metric-card-unit">W</span>
+              </div>
+            </div>
+            <div class="metric-card">
+              <span class="metric-card-title">ENERGY</span>
+              <div class="metric-card-val-row">
+                <span class="metric-card-val" id="statEnergy">9.8</span>
+                <span class="metric-card-unit">Wh</span>
+              </div>
+            </div>
+            <div class="metric-card">
+              <span class="metric-card-title">PEAK CURRENT</span>
+              <div class="metric-card-val-row">
+                <span class="metric-card-val" id="statPeakCurrent">2450</span>
+                <span class="metric-card-unit">mA</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: HISTORY -->
+        <div class="screen-tab-content" id="tab-history">
+          <div class="top-bar-row">
+            <div class="app-title-group">
+              <h1>Session History</h1>
+              <span>Recorded charging sessions</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button class="studio-btn" style="padding:4px 8px; font-size:11px;">CSV</button>
+              <button class="icon-btn-header" onclick="openSettingsScreen()" title="Pengaturan">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div class="metric-card" style="padding:14px;">
+              <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                <span style="font-weight:700; font-size:13px; color:var(--primary);">Session #14</span>
+                <span style="font-size:11px; color:var(--outline);">Today 16:30</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:12px; margin-top:4px;">
+                <span>Duration: <strong>42m 10s</strong></span>
+                <span>Peak: <strong>32.8 W</strong></span>
+                <span>Energy: <strong>14.2 Wh</strong></span>
+              </div>
+              <span style="font-size:10px; color:var(--outline); margin-top:6px;">Level: 22% &rarr; 85% (+63%) • AC Fast Charging</span>
+            </div>
+
+            <div class="metric-card" style="padding:14px;">
+              <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                <span style="font-weight:700; font-size:13px; color:var(--secondary);">Session #13</span>
+                <span style="font-size:11px; color:var(--outline);">Yesterday 20:15</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:12px; margin-top:4px;">
+                <span>Duration: <strong>28m 05s</strong></span>
+                <span>Peak: <strong>18.4 W</strong></span>
+                <span>Energy: <strong>8.1 Wh</strong></span>
+              </div>
+              <span style="font-size:10px; color:var(--outline); margin-top:6px;">Level: 45% &rarr; 80% (+35%) • USB Power Delivery</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 4: BATTERY INFO -->
+        <div class="screen-tab-content" id="tab-battery">
+          <div class="top-bar-row">
+            <div class="app-title-group">
+              <h1>Battery Hardware</h1>
+              <span>OEM hardware profile & kernel telemetry</span>
+            </div>
+            <button class="icon-btn-header" onclick="openSettingsScreen()" title="Pengaturan">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+            </button>
+          </div>
+
+          <div class="metric-card" style="display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; justify-content:space-between; font-size:12px; border-bottom:1px solid var(--outline-variant); padding-bottom:6px;">
+              <span style="color:var(--outline);">Design Capacity</span>
+              <strong style="color:var(--on-background);">5000 mAh</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:12px; border-bottom:1px solid var(--outline-variant); padding-bottom:6px;">
+              <span style="color:var(--outline);">Battery Technology</span>
+              <strong style="color:var(--on-background);">Li-poly</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:12px; border-bottom:1px solid var(--outline-variant); padding-bottom:6px;">
+              <span style="color:var(--outline);">Battery Health</span>
+              <strong style="color:var(--success);">Good</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:12px; border-bottom:1px solid var(--outline-variant); padding-bottom:6px;">
+              <span style="color:var(--outline);">Charge Counter</span>
+              <strong style="color:var(--on-background);">4250 mAh</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:12px;">
+              <span style="color:var(--outline);">Current Data Source</span>
+              <strong style="color:var(--primary);" id="kernelSourceTag">BATTERY_PROPERTY_CURRENT_NOW</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 5: SETTINGS -->
+        <div class="screen-tab-content" id="tab-settings">
+          <div class="top-bar-row">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button class="icon-btn-header" onclick="closeSettingsScreen()" title="Kembali">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+              </button>
+              <div class="app-title-group">
+                <h1>Pengaturan</h1>
+                <span>Konfigurasi aplikasi dan hardware</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="metric-card" style="display:flex; flex-direction:column; gap:12px;">
+            <div style="font-size:11px; font-weight:700; color:var(--primary); text-transform:uppercase;">Tema Tampilan</div>
+            <div class="btn-group-4">
+              <button class="toggle-chip" onclick="applyTheme('system')">System</button>
+              <button class="toggle-chip" onclick="applyTheme('light')">Light</button>
+              <button class="toggle-chip active" id="chipDark" onclick="applyTheme('dark')">Dark</button>
+              <button class="toggle-chip" id="chipOled" onclick="applyTheme('oled')">OLED</button>
+            </div>
+
+            <div style="font-size:11px; font-weight:700; color:var(--primary); text-transform:uppercase; margin-top:6px;">Hardware & Mult</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px;">
+              <span>Invert Sign (- arus jadi +)</span>
+              <input type="checkbox" id="chkInvertSign" onchange="toggleInvertSign(this.checked)">
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px;">
+              <span>Estimasi Cerdas (OPPO/MediaTek)</span>
+              <input type="checkbox" checked id="chkEstimate" onchange="toggleSmartEstimate(this.checked)">
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- BOTTOM NAVIGATION BAR -->
+      <nav class="nav-bar">
+        <button class="nav-item active" onclick="switchNavTab(0, this)">
+          <div class="nav-item-pill">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.38 8.57l-1.23 1.85a8 8 0 0 1-.22 7.58H5.07A8 8 0 0 1 15.58 6.85l1.85-1.23A10 10 0 0 0 3.35 19a2 2 0 0 0 1.72 1h13.85a2 2 0 0 0 1.74-1 10 10 0 0 0-.28-10.43zM10.59 15.41a2 2 0 0 0 2.83 0l5.66-8.49-8.49 5.66a2 2 0 0 0 0 2.83z"/></svg>
+          </div>
+          <span class="nav-item-label">Dashboard</span>
+        </button>
+        <button class="nav-item" onclick="switchNavTab(1, this)">
+          <div class="nav-item-pill">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/></svg>
+          </div>
+          <span class="nav-item-label">Graph</span>
+        </button>
+        <button class="nav-item" onclick="switchNavTab(2, this)">
+          <div class="nav-item-pill">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+          </div>
+          <span class="nav-item-label">History</span>
+        </button>
+        <button class="nav-item" onclick="switchNavTab(3, this)">
+          <div class="nav-item-pill">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+          </div>
+          <span class="nav-item-label">Battery</span>
+        </button>
+      </nav>
+    </div>
+  </div>
+
+  <!-- SIDEBAR: LIVE SIMULATOR & DESIGN INSPECTOR -->
+  <aside class="sidebar-panel">
+
+    <div class="panel-section">
+      <div class="panel-title">
+        <span>Live Telemetry Simulator</span>
+        <button class="studio-btn" style="padding:2px 8px; font-size:11px;" id="btnLiveTicker" onclick="toggleLiveTicker()">Ticker: ON</button>
+      </div>
+
+      <div class="control-row">
+        <div class="control-row-header">
+          <span>Charging Power</span>
+          <span class="val-badge" id="lblSimWatt">24.5 W</span>
+        </div>
+        <input type="range" min="0" max="65" step="0.5" value="24.5" id="sliderWatt" oninput="updateSimWatt(this.value)">
+      </div>
+
+      <div class="control-row">
+        <div class="control-row-header">
+          <span>Current (mA)</span>
+          <span class="val-badge" id="lblSimCurrent">1837 mA</span>
+        </div>
+        <input type="range" min="-3000" max="6000" step="50" value="1837" id="sliderCurrent" oninput="updateSimCurrent(this.value)">
+      </div>
+
+      <div class="control-row">
+        <div class="control-row-header">
+          <span>Voltage (V)</span>
+          <span class="val-badge" id="lblSimVoltage">4.20 V</span>
+        </div>
+        <input type="range" min="3.2" max="4.5" step="0.02" value="4.20" id="sliderVoltage" oninput="updateSimVoltage(this.value)">
+      </div>
+
+      <div class="control-row">
+        <div class="control-row-header">
+          <span>Temperature (°C)</span>
+          <span class="val-badge" id="lblSimTemp">34.2 °C</span>
+        </div>
+        <input type="range" min="20" max="55" step="0.5" value="34.2" id="sliderTemp" oninput="updateSimTemp(this.value)">
+      </div>
+
+      <div class="control-row">
+        <div class="control-row-header">
+          <span>Battery Level</span>
+          <span class="val-badge" id="lblSimLevel">85 %</span>
+        </div>
+        <input type="range" min="1" max="100" step="1" value="85" id="sliderLevel" oninput="updateSimLevel(this.value)">
+      </div>
+
+      <div class="control-row">
+        <div class="control-row-header"><span>Status Daya</span></div>
+        <div class="btn-group-2">
+          <button class="toggle-chip active" id="chipStateCharge" onclick="setChargeState(true)">⚡ Charging</button>
+          <button class="toggle-chip" id="chipStateDischarge" onclick="setChargeState(false)">Discharging</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-title">
+        <span>Design Tokens Tweaker</span>
+      </div>
+
+      <div class="control-row">
+        <div class="control-row-header">
+          <span>Card Radius</span>
+          <span class="val-badge" id="lblRadius">16 px</span>
+        </div>
+        <input type="range" min="8" max="28" step="2" value="16" oninput="tweakCardRadius(this.value)">
+      </div>
+
+      <div class="control-row">
+        <div class="control-row-header">
+          <span>Button Pill Height</span>
+          <span class="val-badge" id="lblBtnHeight">46 px</span>
+        </div>
+        <input type="range" min="38" max="56" step="2" value="46" oninput="tweakBtnHeight(this.value)">
+      </div>
+
+      <div class="control-row">
+        <div class="control-row-header">
+          <span>Tema UI</span>
+        </div>
+        <div class="btn-group-3" style="display:grid; grid-template-columns:repeat(3,1fr); gap:6px;">
+          <button class="toggle-chip" onclick="applyTheme('light')">Light</button>
+          <button class="toggle-chip active" id="sideDark" onclick="applyTheme('dark')">Dark</button>
+          <button class="toggle-chip" id="sideOled" onclick="applyTheme('oled')">OLED Pure</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-title">
+        <span>Compose Token Output</span>
+      </div>
+      <div class="specs-card" id="composeCodeSnippet">val CardRadius = 16.dp
+val ButtonHeight = 46.dp
+val DarkOutline = Color(0xFF9E9E9E)
+val OledBackground = Color(0xFF000000)</div>
+    </div>
+
+  </aside>
+
+</div>
+
+<script>
+let state = {
+  watt: 24.5,
+  avgWatt: 24.2,
+  currentMa: 1837,
+  voltageVolt: 4.20,
+  tempC: 34.2,
+  level: 85,
+  isCharging: true,
+  isEstimated: false,
+  isServiceRunning: false,
+  plugType: "AC",
+  theme: "dark",
+  cardRadius: 16,
+  btnHeight: 46,
+  isLiveTicker: true
+};
+
+let historyData = {
+  power: [18.2, 21.0, 22.4, 23.5, 24.1, 24.5, 24.2, 24.8, 25.1, 24.5],
+  current: [1420, 1560, 1680, 1720, 1800, 1837, 1820, 1850, 1860, 1837],
+  temp: [32.0, 32.4, 32.8, 33.1, 33.5, 33.8, 34.0, 34.1, 34.2, 34.2]
+};
+let activeGraphTab = 0;
+
+function init() {
+  drawGauge();
+  drawChart();
+  startClock();
+  startTickerLoop();
+}
+
+function startClock() {
+  function updateTime() {
+    const d = new Date();
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    document.getElementById('clockDisplay').textContent = `${hh}:${mm}`;
+  }
+  updateTime();
+  setInterval(updateTime, 1000);
+}
+
+function drawGauge() {
+  const canvas = document.getElementById('gaugeCanvas');
+  const ctx = canvas.getContext('2d');
+  const width = canvas.width;
+  const height = canvas.height;
+
+  ctx.clearRect(0, 0, width, height);
+
+  const cx = width / 2;
+  const cy = height / 2;
+  const strokeWidth = 18;
+  const radius = (width - strokeWidth * 2) / 2;
+
+  let maxWatt = 20;
+  if (state.watt > 100) maxWatt = 140;
+  else if (state.watt > 65) maxWatt = 100;
+  else if (state.watt > 33) maxWatt = 65;
+  else if (state.watt > 18) maxWatt = 33;
+  else maxWatt = 20;
+
+  const fraction = Math.max(0, Math.min(1, state.watt / maxWatt));
+  const startAngleDeg = 140;
+  const sweepAngleDeg = 260;
+
+  const toRad = deg => (deg * Math.PI) / 180;
+  const startRad = toRad(startAngleDeg);
+  const totalSweepRad = toRad(sweepAngleDeg);
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, startRad, startRad + totalSweepRad, false);
+  ctx.lineWidth = strokeWidth;
+  ctx.strokeStyle = state.theme === 'light' ? '#E9ECEF' : '#1E1E1E';
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  if (fraction > 0.005) {
+    const gradient = ctx.createLinearGradient(0, cy, width, cy);
+    gradient.addColorStop(0, '#00E5FF');
+    gradient.addColorStop(0.5, '#00B4D8');
+    gradient.addColorStop(1, '#FFB703');
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, startRad, startRad + totalSweepRad * fraction, false);
+    ctx.lineWidth = strokeWidth;
+    ctx.strokeStyle = gradient;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+  }
+
+  const tickCount = 10;
+  for (let i = 0; i <= tickCount; i++) {
+    const tickFrac = i / tickCount;
+    const tickAngle = startRad + totalSweepRad * tickFrac;
+    const outerR = radius;
+    const innerR = radius - 8;
+
+    const x1 = cx + innerR * Math.cos(tickAngle);
+    const y1 = cy + innerR * Math.sin(tickAngle);
+    const x2 = cx + outerR * Math.cos(tickAngle);
+    const y2 = cy + outerR * Math.sin(tickAngle);
+
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = tickFrac <= fraction ? 'rgba(255,255,255,0.85)' : 'rgba(100,100,100,0.4)';
+    ctx.stroke();
+  }
+
+  document.getElementById('gaugeWattDisplay').textContent = state.watt.toFixed(1);
+  document.getElementById('gaugeAvgDisplay').textContent = `Avg ${state.avgWatt.toFixed(1)} W`;
+  document.getElementById('gaugeScaleDisplay').textContent = `0 - ${maxWatt}W Scale` + (state.isEstimated ? ' • Est.' : '');
+}
+
+function drawChart() {
+  const canvas = document.getElementById('chartCanvas');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+
+  const w = rect.width;
+  const h = rect.height;
+  ctx.clearRect(0, 0, w, h);
+
+  const dataList = activeGraphTab === 0 ? historyData.power : (activeGraphTab === 1 ? historyData.current : historyData.temp);
+  const color = activeGraphTab === 0 ? '#00E5FF' : (activeGraphTab === 1 ? '#00B4D8' : '#FFB703');
+
+  if (!dataList || dataList.length < 2) return;
+
+  const minVal = Math.min(...dataList) * 0.9;
+  const maxVal = Math.max(...dataList) * 1.1 || 1;
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1;
+  for (let i = 1; i <= 3; i++) {
+    const y = (h / 4) * i;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(w, y);
+    ctx.stroke();
+  }
+
+  const stepX = w / (dataList.length - 1);
+  const getY = val => h - ((val - minVal) / (maxVal - minVal)) * (h - 20) - 10;
+
+  ctx.beginPath();
+  dataList.forEach((val, idx) => {
+    const x = idx * stepX;
+    const y = getY(val);
+    if (idx === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  ctx.lineTo(w, h);
+  ctx.lineTo(0, h);
+  ctx.closePath();
+  const fillGrad = ctx.createLinearGradient(0, 0, 0, h);
+  fillGrad.addColorStop(0, color.replace(')', ', 0.35)').replace('rgb', 'rgba').replace('#', 'rgba(') || 'rgba(0,229,255,0.25)');
+  fillGrad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = fillGrad;
+  ctx.fill();
+}
+
+function updateSimWatt(val) {
+  state.watt = parseFloat(val);
+  state.avgWatt = Math.max(0, state.watt * 0.98);
+  document.getElementById('lblSimWatt').textContent = `${state.watt.toFixed(1)} W`;
+  drawGauge();
+  updateChartData();
+}
+
+function updateSimCurrent(val) {
+  state.currentMa = parseInt(val);
+  document.getElementById('lblSimCurrent').textContent = `${state.currentMa} mA`;
+  document.getElementById('metricCurrentVal').textContent = Math.abs(state.currentMa);
+  state.watt = (Math.abs(state.currentMa) / 1000) * state.voltageVolt;
+  document.getElementById('sliderWatt').value = state.watt.toFixed(1);
+  document.getElementById('lblSimWatt').textContent = `${state.watt.toFixed(1)} W`;
+  drawGauge();
+}
+
+function updateSimVoltage(val) {
+  state.voltageVolt = parseFloat(val);
+  document.getElementById('lblSimVoltage').textContent = `${state.voltageVolt.toFixed(2)} V`;
+  document.getElementById('metricVoltageVal').textContent = state.voltageVolt.toFixed(2);
+  state.watt = (Math.abs(state.currentMa) / 1000) * state.voltageVolt;
+  document.getElementById('sliderWatt').value = state.watt.toFixed(1);
+  document.getElementById('lblSimWatt').textContent = `${state.watt.toFixed(1)} W`;
+  drawGauge();
+}
+
+function updateSimTemp(val) {
+  state.tempC = parseFloat(val);
+  document.getElementById('lblSimTemp').textContent = `${state.tempC.toFixed(1)} °C`;
+  document.getElementById('metricTempVal').textContent = state.tempC.toFixed(1);
+  const tempIcon = document.getElementById('metricTempIcon');
+  if (state.tempC >= 42) {
+    tempIcon.style.color = 'var(--danger)';
+    document.getElementById('metricTempSub').textContent = 'High temp alert';
+  } else if (state.tempC >= 38) {
+    tempIcon.style.color = 'var(--warning)';
+    document.getElementById('metricTempSub').textContent = 'Elevated';
+  } else {
+    tempIcon.style.color = 'var(--success)';
+    document.getElementById('metricTempSub').textContent = 'Normal range';
+  }
+}
+
+function updateSimLevel(val) {
+  state.level = parseInt(val);
+  document.getElementById('lblSimLevel').textContent = `${state.level} %`;
+  document.getElementById('metricLevelVal').textContent = state.level;
+  document.getElementById('statusBarPercent').textContent = `${state.level}%`;
+}
+
+function setChargeState(isCharging) {
+  state.isCharging = isCharging;
+  document.getElementById('chipStateCharge').classList.toggle('active', isCharging);
+  document.getElementById('chipStateDischarge').classList.toggle('active', !isCharging);
+
+  const badge = document.getElementById('chargingStateBadge');
+  const badgeText = document.getElementById('chargingStateText');
+  const tagText = document.getElementById('gaugeTagText');
+  const tagBox = document.getElementById('gaugeStateTag');
+  const srcLabel = document.getElementById('powerSourceLabel');
+
+  if (isCharging) {
+    badge.classList.remove('discharging');
+    badgeText.textContent = 'CHARGING';
+    tagBox.classList.remove('discharging');
+    tagText.textContent = 'CHARGING';
+    srcLabel.textContent = `Power Source: ${state.plugType}`;
+    if (state.currentMa < 0) state.currentMa = Math.abs(state.currentMa);
+  } else {
+    badge.classList.add('discharging');
+    badgeText.textContent = 'DISCHARGING';
+    tagBox.classList.add('discharging');
+    tagText.textContent = 'DISCHARGING';
+    srcLabel.textContent = 'On Battery';
+    if (state.currentMa > 0) state.currentMa = -state.currentMa;
+  }
+  document.getElementById('metricCurrentVal').textContent = Math.abs(state.currentMa);
+  drawGauge();
+}
+
+function toggleSmartEstimate(enabled) {
+  state.isEstimated = enabled;
+  document.getElementById('diagnosticBanner').style.display = (enabled && state.isCharging && state.currentMa === 0) ? 'flex' : 'none';
+  document.getElementById('metricVoltageSub').textContent = enabled ? 'Estimated' : 'Cell potential';
+  drawGauge();
+}
+
+function toggleInvertSign(checked) {
+  state.currentMa = -state.currentMa;
+  document.getElementById('lblSimCurrent').textContent = `${state.currentMa} mA`;
+}
+
+function toggleMonitorService() {
+  state.isServiceRunning = !state.isServiceRunning;
+  const btn = document.getElementById('btnToggleMonitor');
+  const txt = document.getElementById('monitorText');
+  const icon = document.getElementById('monitorIcon');
+  if (state.isServiceRunning) {
+    btn.classList.add('running');
+    txt.textContent = 'Stop Foreground Monitor';
+    icon.innerHTML = '<path d="M6 6h12v12H6z"/>';
+  } else {
+    btn.classList.remove('running');
+    txt.textContent = 'Start Foreground Monitor';
+    icon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+  }
+}
+
+let currentNavTab = 0;
+let previousNavTab = 0;
+
+function switchNavTab(index, btn) {
+  previousNavTab = currentNavTab;
+  currentNavTab = index;
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  if (btn) {
+    btn.classList.add('active');
+  } else {
+    const navButtons = document.querySelectorAll('.nav-item');
+    if (navButtons[index]) navButtons[index].classList.add('active');
+  }
+
+  const tabs = ['tab-dashboard', 'tab-graph', 'tab-history', 'tab-battery', 'tab-settings'];
+  tabs.forEach((id, i) => {
+    document.getElementById(id).classList.toggle('active', i === index);
+  });
+
+  if (index === 1) {
+    setTimeout(drawChart, 60);
+  }
+}
+
+function openSettingsScreen() {
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  const tabs = ['tab-dashboard', 'tab-graph', 'tab-history', 'tab-battery', 'tab-settings'];
+  tabs.forEach(id => {
+    document.getElementById(id).classList.toggle('active', id === 'tab-settings');
+  });
+}
+
+function closeSettingsScreen() {
+  const navButtons = document.querySelectorAll('.nav-item');
+  const targetIndex = (previousNavTab >= 0 && previousNavTab <= 3) ? previousNavTab : 0;
+  switchNavTab(targetIndex, navButtons[targetIndex]);
+}
+
+function switchGraphTab(tabIndex, btn) {
+  activeGraphTab = tabIndex;
+  document.querySelectorAll('.graph-tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  drawChart();
+}
+
+function applyTheme(themeName) {
+  state.theme = themeName;
+  if (themeName === 'oled') {
+    document.documentElement.setAttribute('data-theme', 'oled');
+  } else if (themeName === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+
+  document.querySelectorAll('.toggle-chip').forEach(c => {
+    if (['chipDark', 'chipOled', 'sideDark', 'sideOled'].includes(c.id)) {
+      c.classList.remove('active');
+    }
+  });
+
+  drawGauge();
+  if (activeGraphTab >= 0) drawChart();
+  updateComposeSnippet();
+}
+
+function tweakCardRadius(val) {
+  state.cardRadius = val;
+  document.documentElement.style.setProperty('--card-radius', `${val}px`);
+  document.getElementById('lblRadius').textContent = `${val} px`;
+  updateComposeSnippet();
+}
+
+function tweakBtnHeight(val) {
+  state.btnHeight = val;
+  const radius = Math.round(val / 2);
+  document.documentElement.style.setProperty('--btn-height', `${val}px`);
+  document.documentElement.style.setProperty('--btn-radius', `${radius}px`);
+  document.getElementById('lblBtnHeight').textContent = `${val} px`;
+  updateComposeSnippet();
+}
+
+function toggleDeviceMode(isFullscreen) {
+  const frame = document.getElementById('deviceFrame');
+  document.getElementById('btnModePhone').classList.toggle('active', !isFullscreen);
+  document.getElementById('btnModeFull').classList.toggle('active', isFullscreen);
+  if (isFullscreen) {
+    frame.classList.add('fullscreen-mode');
+  } else {
+    frame.classList.remove('fullscreen-mode');
+  }
+}
+
+function toggleLiveTicker() {
+  state.isLiveTicker = !state.isLiveTicker;
+  const btn = document.getElementById('btnLiveTicker');
+  btn.textContent = state.isLiveTicker ? 'Ticker: ON' : 'Ticker: OFF';
+  btn.classList.toggle('active', state.isLiveTicker);
+}
+
+function startTickerLoop() {
+  setInterval(() => {
+    if (!state.isLiveTicker) return;
+    if (state.isCharging) {
+      const delta = (Math.random() - 0.48) * 0.6;
+      state.watt = Math.max(0.5, Math.min(65, state.watt + delta));
+      document.getElementById('sliderWatt').value = state.watt.toFixed(1);
+      document.getElementById('lblSimWatt').textContent = `${state.watt.toFixed(1)} W`;
+      drawGauge();
+      updateChartData();
+    }
+  }, 1200);
+}
+
+function updateChartData() {
+  historyData.power.push(parseFloat(state.watt.toFixed(1)));
+  historyData.power.shift();
+  historyData.current.push(parseInt(state.currentMa));
+  historyData.current.shift();
+  historyData.temp.push(parseFloat(state.tempC.toFixed(1)));
+  historyData.temp.shift();
+  if (document.getElementById('tab-graph').classList.contains('active')) {
+    drawChart();
+  }
+}
+
+function updateComposeSnippet() {
+  const snippet = `// Jetpack Compose Design Tokens
+val CardCornerRadius = ${state.cardRadius}.dp
+val ActionButtonHeight = ${state.btnHeight}.dp
+val ActionButtonShape = RoundedCornerShape(${Math.round(state.btnHeight / 2)}.dp)
+
+// Theme Colors (${state.theme.toUpperCase()})
+val ActivePrimary = Color(0xFF00E5FF)
+val HighContrastOutline = Color(0xFF9E9E9E)
+val BackgroundSurface = ${state.theme === 'oled' ? 'Color(0xFF000000)' : (state.theme === 'light' ? 'Color(0xFFF8F9FA)' : 'Color(0xFF121212)')}`;
+  document.getElementById('composeCodeSnippet').textContent = snippet;
+}
+
+function copyComposeTokens() {
+  const text = document.getElementById('composeCodeSnippet').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    alert("Token Jetpack Compose berhasil disalin ke clipboard!");
+  });
+}
+
+window.addEventListener('load', init);
+window.addEventListener('resize', () => {
+  drawGauge();
+  drawChart();
+});
+</script>
+</body>
+</html>

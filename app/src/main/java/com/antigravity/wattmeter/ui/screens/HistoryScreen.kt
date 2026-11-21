@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Power
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -56,7 +57,8 @@ import java.util.Locale
 @Composable
 fun HistoryScreen(
     viewModel: MainViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNavigateToSettings: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val sessions by viewModel.sessions.collectAsState()
@@ -118,6 +120,18 @@ fun HistoryScreen(
                             modifier = Modifier.size(20.dp)
                         )
                     }
+                }
+
+                Spacer(modifier = Modifier.width(4.dp))
+                IconButton(
+                    onClick = onNavigateToSettings,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Settings",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }
