@@ -39,7 +39,7 @@ private val DarkColorScheme = darkColorScheme(
     surface = DarkSurface,
     onSurface = Color(0xFFE6E1E5),
     surfaceVariant = DarkSurfaceVariant,
-    onSurfaceVariant = Color(0xFFCAC4D0),
+    onSurfaceVariant = Color(0xFFD4D4D4),
     surfaceContainer = DarkSurfaceContainer,
     surfaceContainerHigh = DarkSurfaceContainerHigh,
     outline = DarkOutline,
@@ -67,12 +67,12 @@ private val OledColorScheme = darkColorScheme(
     onBackground = Color(0xFFF0F0F0),
     surface = PureBlack,
     onSurface = Color(0xFFF0F0F0),
-    surfaceVariant = Color(0xFF101010),
-    onSurfaceVariant = Color(0xFFCCCCCC),
-    surfaceContainer = Color(0xFF080808),
-    surfaceContainerHigh = Color(0xFF141414),
-    outline = Color(0xFF262626),
-    outlineVariant = Color(0xFF1E1E1E)
+    surfaceVariant = Color(0xFF141414),
+    onSurfaceVariant = Color(0xFFD4D4D4),
+    surfaceContainer = Color(0xFF0A0A0A),
+    surfaceContainerHigh = Color(0xFF1A1A1A),
+    outline = Color(0xFF9E9E9E),
+    outlineVariant = Color(0xFF424242)
 )
 
 private val LightColorScheme = lightColorScheme(
