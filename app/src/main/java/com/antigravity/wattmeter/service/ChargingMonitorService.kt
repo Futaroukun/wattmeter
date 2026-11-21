@@ -35,6 +35,7 @@ class ChargingMonitorService : Service() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var dataCollectionJob: Job? = null
     private var unplugJob: Job? = null
+    private var hasBeenPlugged = false
 
     private lateinit var notificationManager: NotificationManager
     private lateinit var alarmHandler: AlarmHandler
@@ -101,20 +102,20 @@ class ChargingMonitorService : Service() {
     }
 
     private fun handleSnapshotUpdate(snapshot: BatterySnapshot, settings: UserSettings) {
-        if (settings.autoStopOnUnplug) {
-            if (!snapshot.isCharging) {
-                if (unplugJob == null) {
-                    unplugJob = serviceScope.launch {
-                        delay(UNPLUG_GRACE_MS)
-                        val latest = (application as WattmeterApp).batteryRepository.snapshotFlow.first()
-                        if (!latest.isCharging) {
-                            stopMonitoring()
-                        }
-                        unplugJob = null
-                    }
+        latestSnapshot = snapshot
+        val plugged = snapshot.plugType.isNotEmpty() && snapshot.plugType != "Battery"
+        if (plugged) {
+            hasBeenPlugged = true
+            unplugJob?.cancel()
+            unplugJob = null
+        } else if (hasBeenPlugged && unplugJob == null) {
+            unplugJob = serviceScope.launch {
+                delay(UNPLUG_GRACE_MS)
+                val latest = (application as WattmeterApp).batteryRepository.snapshotFlow.first()
+                val stillPlugged = latest.plugType.isNotEmpty() && latest.plugType != "Battery"
+                if (!stillPlugged) {
+                    stopMonitoring()
                 }
-            } else {
-                unplugJob?.cancel()
                 unplugJob = null
             }
         }
@@ -240,6 +241,7 @@ class ChargingMonitorService : Service() {
 
     private fun stopMonitoring() {
         isRunning = false
+        hasBeenPlugged = false
         unplugJob?.cancel()
         unplugJob = null
         notificationManager.cancel(NOTIFICATION_ID_MONITORING)
@@ -264,6 +266,10 @@ class ChargingMonitorService : Service() {
 
         @Volatile
         var isRunning: Boolean = false
+            private set
+
+        @Volatile
+        var latestSnapshot: BatterySnapshot? = null
             private set
     }
 }
